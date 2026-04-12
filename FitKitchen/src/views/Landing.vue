@@ -1,35 +1,6 @@
 <template>
-  <div class="landing-page">
-    <header class="navbar">
-      <div class="logo">
-        <img :src="logo" alt="FitKitchen Logo" class="nav-custom-icon" /> 
-        <span class="logo-text">FitKitchen</span>
-      </div>
-      
-      <nav class="nav-links">
-        <router-link path="/" class="nav-item active">
-          <img :src="homeIcon" alt="Home" class="nav-custom-icon" /> Home
-        </router-link>
-  
-        <router-link path="/meal-planner" class="nav-item">
-          <img :src="mealIcon" alt="Meal Planner" class="nav-custom-icon" /> Meal Planner
-        </router-link>
-
-        <router-link path="/profile" class="nav-item">
-          <img :src="profileIcon" alt="Profile" class="nav-custom-icon" /> Profile
-        </router-link>
-        </nav>
-
-      <div class="user-actions">
-        <div class="user-info">
-          <span class="user-name">John Doe</span>
-          <span class="user-role">User</span>
-        </div>
-        <button class="btn-logout">
-          <img :src="logoutIcon" alt="Logout" class="nav-custom-icon" /> Logout
-        </button>
-      </div>
-    </header>
+  <div class="FitKitchen">
+  <NavbarUser />
 
     <section class="hero">
       <div class="hero-content">
@@ -111,15 +82,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
-import homeIcon from '../assets/icons/home.png'
-import mealIcon from '../assets/icons/planner.png'
-import profileIcon from '../assets/icons/profile.png'
-import logoutIcon from '../assets/icons/logout.png'
+import NavbarUser from '../components/NavbarUser.vue'
 import searchIcon from '../assets/icons/search.png'
 import protein from '../assets/icons/protein.png'
 import calories from '../assets/icons/Calori.png'
-import logo from '../assets/icons/logo.png'
 import filter from '../assets/icons/filter.png'
 
 

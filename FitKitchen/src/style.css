@@ -58,6 +58,10 @@
   color: white;
 }
 
+.nav-item.active .nav-custom-icon {
+  filter: brightness(0) invert(1); /* Ini akan mengubah ikon hitam/warna menjadi putih bersih */
+}
+
 .user-actions {
   display: flex;
   align-items: center;
