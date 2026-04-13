@@ -24,7 +24,7 @@
         <span class="user-name">John Doe</span>
         <span class="user-role">User</span>
       </div>
-      <button class="btn-logout">
+      <button class="btn-logout" @click="handleLogout">
         <img :src="logoutIcon" alt="Logout" class="nav-custom-icon" /> Logout
       </button>
     </div>
@@ -32,13 +32,27 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import homeIcon from '../assets/icons/home.png'
 import mealIcon from '../assets/icons/planner.png'
 import profileIcon from '../assets/icons/profile.png'
 import logoutIcon from '../assets/icons/logout.png'
 import logo from '../assets/icons/logo.png'
+
+// Inisialisasi router
+const router = useRouter()
+
+// Fungsi untuk menangani proses logout
+const handleLogout = () => {
+  // tempat meletakkan logika auth asli.
+  // Misalnya menghapus token dari localStorage atau mereset state user (John Doe).
+  // Contoh: localStorage.removeItem('user-token');
+
+  // Arahkan kembali ke halaman login
+  router.push('/login')
+}
 </script>
 
 <style scoped>
-
+/* Styling dibiarkan kosong karena manajemen desain difokuskan pada style.css global */
 </style>
