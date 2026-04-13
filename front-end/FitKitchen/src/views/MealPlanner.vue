@@ -13,8 +13,12 @@
         <div class="day-header">
           <h2>{{ day }}</h2>
           <div class="day-stats">
-            <span>🔥 {{ calculateDailyTotals(day).calories }} cal</span>
-            <span>💪 {{ calculateDailyTotals(day).protein }}g protein</span>
+            <span class="stat-item">
+             <img :src="calories" alt="Calories" class="meta-icon" />  
+             {{ calculateDailyTotals(day).calories }} cal</span>
+            <span class="stat-item">
+              <img :src="protein" alt="Protein" class="meta-icon" />  
+              {{ calculateDailyTotals(day).protein }}g protein</span>
           </div>
         </div>
 
@@ -23,10 +27,19 @@
             <span class="meal-label">{{ time }}</span>
             
             <div v-if="planner[day][time]" class="selected-recipe-card">
-              <img :src="planner[day][time].image" :alt="planner[day][time].title" />
+              <img :src="planner[day][time].image" :alt="planner[day][time].title" class="card-main-img" />
               <div class="recipe-info">
                 <h3>{{ planner[day][time].title }}</h3>
-                <p>{{ planner[day][time].calories }} cal | {{ planner[day][time].protein }}g pro</p>
+                <div class="card-meta">
+                  <span class="meta-item">
+                    <img :src="calories" alt="Cal" class="meta-icon" />
+                    {{ planner[day][time].calories }} cal
+                  </span>
+                  <span class="meta-item">
+                    <img :src="protein" alt="Pro" class="meta-icon" />
+                    {{ planner[day][time].protein }}g
+                  </span>
+                </div>
               </div>
               <button @click="removeRecipe(day, time)" class="btn-remove">×</button>
             </div>
@@ -73,12 +86,13 @@
 import { ref, reactive } from 'vue';
 import { recipes } from '../data/recipes.js';
 import NavbarUser from '../components/NavbarUser.vue'
-
+import calories from '../assets/icons/Calori.png'
+import protein from '../assets/icons/protein.png'
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const mealTimes = ['Breakfast', 'Lunch', 'Dinner'];
 
-// State untuk menyimpan rencana makan
+
 const planner = reactive({
   Monday: { Breakfast: null, Lunch: null, Dinner: null },
   Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
@@ -128,24 +142,6 @@ const calculateDailyTotals = (day) => {
 <style scoped>
 
 
-/* Reset dasar untuk memastikan tidak ada celah di atas */
-.meal-planner-page { 
-  background: #f8fafc; 
-  min-height: 100vh; 
-  padding-top: 100px; /* Memberi ruang agar konten tidak tertutup navbar fixed */
-}
-
-/* Navbar gaya fixed agar nempel di atas terus */
-.navbar.fixed-top {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  /* Pro-tip: Tambahkan sedikit shadow agar terlihat terpisah dari konten saat di-scroll */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
 .content-container { 
   max-width: 1100px; 
   margin: 0 auto; 
@@ -153,12 +149,40 @@ const calculateDailyTotals = (day) => {
 }
 
 .planner-header {
-  margin-bottom: 40px; /* Menambah jarak antara judul "Meal Planner" dengan kartu hari */
+  margin-bottom: 40px; 
 }
 
 .planner-header h1 {
   font-size: 2.2rem;
   margin-bottom: 8px;
+}
+
+
+/* Styling Ikon agar rapi */
+.meta-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+
+
+.stat-item, .meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.card-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.recipe-info h3 {
+  margin-bottom: 2px;
 }
 
 .day-card { 
@@ -179,7 +203,12 @@ const calculateDailyTotals = (day) => {
 .btn-add-recipe:hover { background: #edf2f7; border-color: #48bb78; color: #48bb78; }
 
 .selected-recipe-card { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
-.selected-recipe-card img { width: 100%; height: 100px; object-fit: cover; }
+
+.selected-recipe-card .card-main-img { 
+  width: 100%; 
+  height: 100px; 
+  object-fit: cover; 
+}
 .recipe-info { padding: 10px; }
 .recipe-info h3 { font-size: 14px; margin: 0; }
 .recipe-info p { font-size: 12px; color: #718096; margin: 5px 0 0; }

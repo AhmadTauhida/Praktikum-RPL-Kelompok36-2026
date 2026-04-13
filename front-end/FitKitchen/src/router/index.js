@@ -26,8 +26,8 @@ const routes = [
     component: Register
   },
   {
-    path: '/menu',
-    name: 'Menu',
+    path: '/menu/:id', 
+    name: 'MenuDetail',
     component: Menu
   },
   {
