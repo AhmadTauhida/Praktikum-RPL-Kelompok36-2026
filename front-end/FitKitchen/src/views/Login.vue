@@ -39,11 +39,12 @@
               required 
             />
             <button 
-              type="button" 
-              class="toggle-password" 
-              @click="showPassword = !showPassword"
+                type="button" 
+                class="toggle-password" 
+                @click="showPassword = !showPassword"
             >
-              {{ showPassword ? '👁️' : '🙈' }}
+              <img v-if="showPassword" :src="eye" alt="Eye Icon" class="icon-eye" />
+              <img v-else :src="eyesoff" alt="Eye Off Icon" class="icon-eye" />
             </button>
           </div>
         </div>
@@ -64,6 +65,8 @@ import { useRouter } from 'vue-router'
 import logo from '../assets/icons/logo.png'
 import mail from '../assets/icons/mail.svg'
 import lock from '../assets/icons/lock.svg'
+import eye from '../assets/icons/eye.svg'
+import eyesoff from '../assets/icons/eye-off.svg'
 
 const email = ref('')
 const password = ref('')
@@ -163,6 +166,17 @@ const handleLogin = () => {
   font-weight: 600;
   color: #333;
   margin-bottom: 0.5rem;
+}
+
+.icon-eye {
+  width: 20px;
+  height: auto;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.toggle-password:hover .icon-eye {
+  opacity: 1;
 }
 
 .input-wrapper {

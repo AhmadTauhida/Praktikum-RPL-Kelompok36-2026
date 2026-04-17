@@ -68,7 +68,7 @@
 }
 
 .nav-item.active .nav-custom-icon {
-  filter: brightness(0) invert(1); /* Ini akan mengubah ikon hitam/warna menjadi putih bersih */
+  filter: brightness(0) invert(1); 
 }
 
 .user-actions {

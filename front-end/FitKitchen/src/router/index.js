@@ -8,6 +8,7 @@ import Menu from '../views/Menu.vue'
 import MealPlanner from '../views/MealPlanner.vue'
 import Profile from '../views/Profile.vue'
 import Admin from '../views/Admin.vue'
+import Calculator from '../views/Calculator.vue'
 
 const routes = [
   {
@@ -39,6 +40,11 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: Profile
+  },
+  {
+    path: '/calculator',
+    name: 'Calculator',
+    component: Calculator
   },
   {
     path: '/admin',

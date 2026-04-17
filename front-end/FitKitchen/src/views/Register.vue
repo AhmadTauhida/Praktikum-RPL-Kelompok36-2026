@@ -60,7 +60,8 @@
               class="toggle-password" 
               @click="showPassword = !showPassword"
             >
-              {{ showPassword ? '👁️' : '🙈' }}
+              <img v-if="showPassword" :src="eye" alt="Eye Icon" class="icon-eye" />
+              <img v-else :src="eyesoff" alt="Eye Off Icon" class="icon-eye" />
             </button>
           </div>
           
@@ -155,6 +156,8 @@ import weightIcon from '../assets/icons/weight.svg'
 import heightIcon from '../assets/icons/height.svg'
 import calendarIcon from '../assets/icons/calendar.svg'
 import profileIcon from '../assets/icons/profile.png'
+import eye from '../assets/icons/eye.svg'
+import eyesoff from '../assets/icons/eye-off.svg'
 
 
 const router = useRouter()
@@ -307,13 +310,13 @@ const handleRegister = () => {
   align-items: center;
 }
 
-/* PERBAIKAN CSS ICON: Memberikan dimensi yang seragam agar gambar tidak merusak layout */
+
 .input-wrapper .icon {
   position: absolute;
   left: 12px;
   width: 20px;
   height: auto;
-  opacity: 0.6; /* Membuat icon sedikit lebih transparan/abu-abu agar lebih elegan */
+  opacity: 0.6; 
 }
 
 .input-wrapper input {
@@ -324,6 +327,17 @@ const handleRegister = () => {
   background-color: #f9f9f9;
   font-size: 1rem;
   transition: all 0.3s ease;
+}
+
+.icon-eye {
+  width: 20px;
+  height: auto;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.toggle-password:hover .icon-eye {
+  opacity: 1;
 }
 
 .toggle-password {
