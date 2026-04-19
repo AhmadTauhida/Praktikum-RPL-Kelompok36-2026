@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Terapkan ke seluruh elemen */
+:root {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Reset dasar agar tidak ada margin aneh */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+
+/* NAVBAR GLOBAL STYLE */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 40px;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #EAEAEA;
+  
+  
+  position: sticky;
+  top: 0;
+  z-index: 1000; 
+  width: 100%;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #555;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #F0FDF4;
+  color: #16A34A;
+}
+
+.nav-item.active {
+  background-color: #22C55E;
+  color: white;
+}
+
+.nav-item.active .nav-custom-icon {
+  filter: brightness(0) invert(1); 
+}
+
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  border-right: 1px solid #ddd;
+  padding-right: 20px;
+}
+
+.user-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #1A1A1A;
+}
+
+.user-role {
+  font-size: 12px;
+  color: #888;
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, button, textarea, select {
+  font-family: inherit;
+}
