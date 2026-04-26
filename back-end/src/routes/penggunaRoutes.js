@@ -5,8 +5,13 @@ const router = express.Router();
 
 // Pemetaan akar rute "/" ke instruksi pembacaan massal komprehensif
 router.get("/", PenggunaController.getAll);
-// Pemetaan permohonan injeksi formasi struktur data pengguna
-router.post("/", PenggunaController.create);
+
+// RUTE BARU: Pemetaan permohonan registrasi (Injeksi data tersandi)
+router.post("/register", PenggunaController.register);
+
+// RUTE BARU: Pemetaan autentikasi sesi (Penerbitan Token)
+router.post("/login", PenggunaController.login);
+
 // Penyusunan parameter wildcard penampung ID spesifik (/:id) untuk operasi penghapusan selektif
 router.delete("/:id", PenggunaController.remove);
 

@@ -11,6 +11,13 @@ export const PenggunaModel = {
     if (error) throw error;
     return data;
   },
+  // FUNGSI BARU: Ekstraksi entitas pengguna berdasarkan identitas email
+  async getByEmail(email) {
+    const { data, error } = await supabase.from("pengguna").select("*").eq("email", email).single();
+    // Supabase mengembalikan error 'PGRST116' jika tidak ada baris yang ditemukan pada .single()
+    if (error && error.code !== "PGRST116") throw error;
+    return data || null; // Kembalikan null jika pengguna tidak ditemukan
+  },
   async create(payload) {
     const { data, error } = await supabase.from("pengguna").insert([payload]).select().single();
     if (error) throw error;
