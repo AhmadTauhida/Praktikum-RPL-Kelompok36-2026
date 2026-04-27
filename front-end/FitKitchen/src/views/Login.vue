@@ -73,6 +73,11 @@ const password = ref('')
 const emailError = ref('')
 const showPassword = ref(false)
 const router = useRouter()
+const ADMIN_EMAIL = 'admin@fitkitchen.com'
+const ADMIN_PASSWORD = 'admin123'
+const USER_EMAIL = 'user@fitkitchen.com'
+const USER_PASSWORD = 'user123'
+
 
 // Fungsi Validasi Format Email
 const validateEmail = () => {
@@ -86,18 +91,35 @@ const validateEmail = () => {
   }
 }
 
-// Pengecekan agar tombol submit aktif
+
 const isFormValid = computed(() => {
   return email.value && password.value && !emailError.value
 })
 
 const handleLogin = () => {
-  validateEmail() // Validasi ekstra saat disubmit
-  
+  validateEmail() 
   // Simulasi login sukses
   if (isFormValid.value) {
-    // Di sini nantinya kamu bisa menyimpan status login ke localStorage/Vuex
-    router.push('/')
+    if (email.value === ADMIN_EMAIL && password.value === ADMIN_PASSWORD) {
+      // Simulasi menyimpan sesi (bisa pakai localStorage)
+      localStorage.setItem('isAuthenticated', 'true')
+      localStorage.setItem('userRole', 'admin')
+      
+      // Arahkan ke halaman Admin
+      router.push('/admin') // Sesuaikan dengan route halaman Admin kamu
+      alert('Login Berhasil! Selamat datang Admin.')
+    } else if (email.value === USER_EMAIL && password.value === USER_PASSWORD) {
+      // Simulasi login user biasa
+      localStorage.setItem('isAuthenticated', 'true')
+      localStorage.setItem('userRole', 'user')
+
+      // Arahkan ke halaman utama atau profil user
+      router.push('/')
+      alert('Login Berhasil! Selamat datang User.')
+    } else {
+      // Jika salah, munculkan peringatan
+      alert('Email atau Password salah!')
+    }
   }
 }
 </script>

@@ -9,6 +9,10 @@ import MealPlanner from '../views/MealPlanner.vue'
 import Profile from '../views/Profile.vue'
 import Admin from '../views/Admin.vue'
 import Calculator from '../views/Calculator.vue'
+import UserManagement from '../views/userManagement.vue'
+import AddRecipe from '../views/AddRecipe.vue'
+import AdminDashboard from '../views/AdminDashboard.vue' 
+
 
 const routes = [
   {
@@ -50,12 +54,39 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: Admin
+  },
+  // router/index.js
+{
+  path: '/admin/add-recipe',
+  name: 'AddRecipe',
+  component: AddRecipe 
+},
+  {
+    path: '/userManagement',
+    name: 'UserManagement',
+    component: UserManagement
+  },
+  {
+    path: '/admin/dashboard',
+    name: 'AdminDashboard',
+    component: AdminDashboard
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = localStorage.getItem('isAuthenticated')
+  const userRole = localStorage.getItem('userRole')
+
+  if (to.meta.requiresAdmin && (!isAuthenticated || userRole !== 'admin')) {
+    next('/login') // Tendang ke login jika belum login/bukan admin
+  } else {
+    next()
+  }
 })
 
 export default router
