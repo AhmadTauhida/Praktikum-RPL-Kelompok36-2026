@@ -1,78 +1,81 @@
 <template>
-  <NavbarAdmin />
-  <div class="admin-container">
+  <div class="admin-layout">
     
-    <div class="page-header">
-      
-      <div class="header-titles">
-        <h1>Recipe Management</h1>
-        <p>Manage all recipes in the system</p>
-      </div>
+    <NavbarAdmin />
+    
+    <main class="admin-content">
+      <div class="page-header">
+        <div class="header-titles">
+          <h1>Recipe Management</h1>
+          <p>Manage all recipes in the system</p>
+        </div>
         <router-link to="/admin/add-recipe" class="btn-add-link" style="text-decoration: none;">
           <button class="btn-add">
-           Add Recipe
+            Add Recipe
           </button>
         </router-link>
       </div>
 
-    <div class="controls-section">
-      <div class="search-wrapper">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input 
-          type="text" 
-          v-model="searchQuery" 
-          placeholder="Search recipes..." 
-          class="search-input"
-        />
-      </div>
-      <div class="filter-placeholder"></div>
-    </div>
-
-    <div class="results-info">
-      Showing <strong>{{ filteredRecipes.length }}</strong> recipes
-    </div>
-
-    <div class="table-container">
-      <div class="table-header">
-        <div class="col-img">Image</div>
-        <div class="col-name">Name</div>
-        <div class="col-category">Category</div>
-        <div class="col-calories">Calories</div>
-        <div class="col-protein">Protein</div>
-        <div class="col-actions">Actions</div>
+      <div class="controls-section">
+        <div class="search-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input 
+            type="text" 
+            v-model="searchQuery" 
+            placeholder="Search recipes..." 
+            class="search-input"
+          />
+        </div>
+        <div class="filter-placeholder"></div>
       </div>
 
-      <div class="table-body">
-        <div v-for="recipe in filteredRecipes" :key="recipe.id" class="table-row">
-          <div class="col-img">
-            <img :src="recipe.image" :alt="recipe.title" class="recipe-thumbnail" />
-          </div>
-          <div class="col-name">
-            <h4 class="recipe-title">{{ recipe.title }}</h4>
-            <p class="recipe-desc">{{ recipe.description }}</p>
-          </div>
-          <div class="col-category">
-            <span class="badge">{{ getCategory(recipe.id) }}</span>
-          </div>
-          <div class="col-calories stat-group">
-            <img :src="recipe.calIcon" alt="Calories" class="stat-icon" /> 
-            <span>{{ recipe.calories }}</span>
-          </div>
-          <div class="col-protein stat-group">
-            <img :src="recipe.proIcon" alt="Protein" class="stat-icon" /> 
-            <span>{{ recipe.protein }}g</span>
-          </div>
-          <div class="col-actions">
-            <button class="btn-action edit" @click="editRecipe(recipe.id)" title="Edit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-            <button class="btn-action delete" @click="deleteRecipe(recipe.id)" title="Delete">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
+      <div class="results-info">
+        Showing <strong>{{ filteredRecipes.length }}</strong> recipes
+      </div>
+
+      <div class="table-container">
+        <div class="table-header">
+          <div class="col-img">Image</div>
+          <div class="col-name">Name</div>
+          <div class="col-category">Category</div>
+          <div class="col-calories">Calories</div>
+          <div class="col-protein">Protein</div>
+          <div class="col-actions">Actions</div>
+        </div>
+
+        <div class="table-body">
+          <div v-for="recipe in filteredRecipes" :key="recipe.id" class="table-row">
+            <div class="col-img">
+              <img :src="recipe.image" :alt="recipe.title" class="recipe-thumbnail" />
+            </div>
+            <div class="col-name">
+              <h4 class="recipe-title">{{ recipe.title }}</h4>
+              <p class="recipe-desc">{{ recipe.description }}</p>
+            </div>
+            <div class="col-category">
+              <span class="badge">{{ getCategory(recipe.id) }}</span>
+            </div>
+            <div class="col-calories stat-group">
+              <img :src="recipe.calIcon" alt="Calories" class="stat-icon" /> 
+              <span>{{ recipe.calories }}</span>
+            </div>
+            <div class="col-protein stat-group">
+              <img :src="recipe.proIcon" alt="Protein" class="stat-icon" /> 
+              <span>{{ recipe.protein }}g</span>
+            </div>
+            <div class="col-actions">
+              <button class="btn-action edit" @click="editRecipe(recipe.id)" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-action delete" @click="deleteRecipe(recipe.id)" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
+    
   </div>
 </template>
 
@@ -81,10 +84,8 @@ import { ref, computed } from 'vue'
 import { recipes } from '../data/recipes.js' 
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 
-
 const searchQuery = ref('')
 
-// Computed property untuk fitur pencarian
 const filteredRecipes = computed(() => {
   if (!searchQuery.value) return recipes
   const lowerCaseQuery = searchQuery.value.toLowerCase()
@@ -94,14 +95,12 @@ const filteredRecipes = computed(() => {
   )
 })
 
-// Mapper fungsi untuk mendapatkan kategori waktu makan berdasarkan ID
 const getCategory = (id) => {
   if ([1, 5].includes(id)) return 'Breakfast'
   if ([2, 3, 6].includes(id)) return 'Lunch'
   return 'Dinner'
 }
 
-// Simulasi fungsi aksi
 const editRecipe = (id) => {
   console.log('Edit recipe clicked for ID:', id)
 }
@@ -114,12 +113,17 @@ const deleteRecipe = (id) => {
 </script>
 
 <style scoped>
-.admin-container {
-  padding: 2rem 4rem;
+/* Class baru untuk layout utama tanpa padding */
+.admin-layout {
   background-color: #fafafa;
   min-height: 100vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: #333;
+}
+
+/* Class baru untuk konten yang membutuhkan padding */
+.admin-content {
+  padding: 2rem 4rem;
 }
 
 .page-header {

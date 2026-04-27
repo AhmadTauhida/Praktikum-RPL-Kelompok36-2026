@@ -7,11 +7,12 @@ import Register from '../views/Register.vue'
 import Menu from '../views/Menu.vue'
 import MealPlanner from '../views/MealPlanner.vue'
 import Profile from '../views/Profile.vue'
-import Admin from '../views/Admin.vue'
+import RecipeManagement from '../views/RecipeManagement.vue'
 import Calculator from '../views/Calculator.vue'
 import UserManagement from '../views/userManagement.vue'
 import AddRecipe from '../views/AddRecipe.vue'
 import AdminDashboard from '../views/AdminDashboard.vue' 
+
 
 
 const routes = [
@@ -51,9 +52,9 @@ const routes = [
     component: Calculator
   },
   {
-    path: '/admin',
-    name: 'Admin',
-    component: Admin
+    path: '/RecipeManagement',
+    name: 'RecipeManagement',
+    component: RecipeManagement
   },
   // router/index.js
 {
@@ -67,7 +68,7 @@ const routes = [
     component: UserManagement
   },
   {
-    path: '/admin/dashboard',
+    path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard
   }

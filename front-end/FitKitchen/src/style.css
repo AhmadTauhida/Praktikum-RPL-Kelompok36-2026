@@ -12,17 +12,31 @@
   box-sizing: border-box;
 }
 
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fafafa; /* Tambahan opsional agar navbar putih lebih menonjol */
+}
+
+input, button, textarea, select {
+  font-family: inherit;
+}
 
 
-/* NAVBAR GLOBAL STYLE */
+
+/* =========================================
+   NAVBAR GLOBAL STYLE 
+   (Berlaku untuk Admin & User)
+========================================= */
+
 .navbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-between; /* Memisahkan Logo (Kiri) dan Menu (Kanan) */
   align-items: center;
-  padding: 15px 40px;
+  padding: 12px 40px; /* Padding vertikal sedikit dirapatkan, horizontal tetap luas */
   background-color: #FFFFFF;
   border-bottom: 1px solid #EAEAEA;
-  
   
   position: sticky;
   top: 0;
@@ -30,19 +44,40 @@
   width: 100%;
 }
 
+/* --- Bagian Kiri (Logo) --- */
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 20px;
-  font-weight: bold;
-  color: black;
-  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  color: #1a1a1a;
 }
 
+.logo-icon {
+  width: 24px;
+  height: 24px;
+  /* Filter untuk mengubah ikon SVG hitam menjadi hijau #22C55E secara global */
+  filter: invert(58%) sepia(54%) saturate(3015%) hue-rotate(108deg) brightness(98%) contrast(88%);
+}
+
+/* --- Wrapper Kanan (Menu Navigasi & Profil) --- */
+.nav-right-section {
+  display: flex;
+  align-items: center;
+  gap: 24px; /* Jarak antara blok navigasi dan blok profil */
+}
+
+/* --- Link Navigasi --- */
 .nav-links {
   display: flex;
-  gap: 20px;
+  gap: 8px; /* Jarak antar tombol menu yang berdekatan */
+}
+
+.mainIcon {
+  width: 28px;
+  height: 28px;
+  
 }
 
 .nav-item {
@@ -50,43 +85,55 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: #555;
-  padding: 8px 16px;
-  border-radius: 8px;
+  color: #333;
+  padding: 8px 18px; /* Padding horizontal dilebarkan */
+  border-radius: 20px; /* Diubah menjadi 20px agar bentuknya melengkung seperti kapsul */
   font-weight: 500;
+  font-size: 15px;
   transition: all 0.2s ease;
 }
 
-.nav-item:hover {
+.nav-custom-icon {
+  width: 18px;
+  height: 18px;
+  transition: filter 0.2s ease;
+  filter: brightness(0); /* Default ikon menjadi hitam pekat */
+}
+
+.nav-item:hover:not(.active) {
   background-color: #F0FDF4;
   color: #16A34A;
 }
 
+/* Fitur Perubahan Warna Saat Aktif */
 .nav-item.active {
   background-color: #22C55E;
-  color: white;
+  color: #ffffff;
 }
 
 .nav-item.active .nav-custom-icon {
-  filter: brightness(0) invert(1); 
+  filter: brightness(0) invert(1); /* Mengubah ikon menjadi putih */
 }
 
+/* --- Aksi Pengguna (Profil & Logout) --- */
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
+/* Garis pemisah dipindah ke sini (sebagai border-left) */
 .user-info {
   display: flex;
   flex-direction: column;
-  text-align: right;
-  border-right: 1px solid #ddd;
-  padding-right: 20px;
+  text-align: left; /* Mengubah teks menjadi rata kiri */
+  border-left: 1px solid #eaeaea; /* Menjadi garis pemisah antara Menu dan Profil */
+  padding-left: 24px; /* Memberi jarak antara garis pemisah dengan nama profil */
+  line-height: 1.3;
 }
 
 .user-name {
-  font-weight: bold;
+  font-weight: 600;
   font-size: 14px;
   color: #1A1A1A;
 }
@@ -101,19 +148,19 @@
   border: none;
   cursor: pointer;
   font-weight: 500;
-  color: #555;
+  font-size: 15px;
+  color: #333;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
+  padding: 0;
+  transition: color 0.2s ease;
 }
 
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.btn-logout:hover {
+  color: #e74c3c;
 }
 
-input, button, textarea, select {
-  font-family: inherit;
+.btn-logout:hover .nav-custom-icon {
+  filter: invert(32%) sepia(85%) saturate(2462%) hue-rotate(345deg) brightness(90%) contrast(96%);
 }

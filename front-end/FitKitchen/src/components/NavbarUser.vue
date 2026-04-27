@@ -1,7 +1,7 @@
 <template>
   <header class="navbar fixed-top">
     <div class="logo">
-      <img :src="logo" alt="FitKitchen Logo" class="nav-custom-icon" /> 
+      <img :src="logo" alt="FitKitchen Logo" class="mainIcon" /> 
       <span class="logo-text">FitKitchen</span>
     </div>
 
