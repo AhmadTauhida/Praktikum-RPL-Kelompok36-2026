@@ -3,16 +3,20 @@
     <NavbarAdmin />
 
     <div class="back-button-wrapper">
-      <button @click="$router.push('/RecipeManagement')" class="back-btn">
+      <button @click="$router.back()" class="back-btn">
         <img :src="backButton" alt="Back" class="back-icon" /> Back to Recipes
       </button>
     </div>
 
     <div class="content-wrapper">
-      <h1 class="form-title">Add New Recipe</h1>
-      <p class="form-subtitle">Create a new healthy recipe</p>
+      <h1 class="form-title">Edit Recipe</h1>
+      <p class="form-subtitle">Update recipe information</p>
       
-      <div class="form-card">
+      <div v-if="fetching" class="loading-state">
+        <p>Loading recipe data...</p>
+      </div>
+
+      <div v-else class="form-card">
         <form @submit.prevent="handleSubmit" class="recipe-form">
           
           <section class="form-section">
@@ -48,9 +52,8 @@
             </div>
 
             <div class="input-group">
-              <label>Recipe Image</label>
-              <input type="file" accept="image/*" @change="handleFileChange" class="file-input">
-              <small class="help-text">Upload a .jpg, .jpeg, or .png file</small>
+              <label>Image URL</label>
+              <input v-model="form.img_url" type="text" placeholder="https://example.com/image.jpg">
             </div>
 
             <div class="row-inputs">
@@ -100,7 +103,7 @@
           <div class="action-buttons">
             <button type="button" class="cancel-btn" @click="$router.push('/RecipeManagement')">Cancel</button>
             <button type="submit" class="submit-btn" :disabled="loading">
-              {{ loading ? 'Creating...' : 'Create Recipe' }}
+              {{ loading ? 'Updating...' : 'Update Recipe' }}
             </button>
           </div>
         </form>
@@ -110,45 +113,86 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { reactive, ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { supabase } from '../lib/supabaseClient'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 import backButton from '../assets/icons/backButton.svg'
 
 const router = useRouter()
+const route = useRoute()
+
+const recipeId = route.params.id
+
 const loading = ref(false)
-const selectedFile = ref(null)
+const fetching = ref(true)
 
 const form = reactive({
-  nama_resep: '', 
-  deskripsi: '', 
-  kalori: null, 
-  protein: null, 
+  nama_resep: '',
+  deskripsi: '',
+  img_url: '',
+  kalori: null,
+  protein: null,
   prep_time: null,
-  kategori_diet: [], // Array untuk menyimpan pilihan checkbox
-  bahan: [''], 
+  kategori_diet: [], // Array untuk checkbox
+  bahan: [''],
   langkah: ['']
 })
 
-const handleFileChange = (event) => {
-  const file = event.target.files[0]
-  if (file) {
-    selectedFile.value = file
+const fetchRecipeData = async () => {
+  try {
+    fetching.value = true
+    const { data, error } = await supabase
+      .from('resep')
+      .select('*')
+      .eq('id_resep', recipeId)
+      .single()
+
+    if (error) throw error
+
+    if (data) {
+      form.nama_resep = data.nama_resep
+      form.deskripsi = data.deskripsi
+      form.img_url = data.img_url || ''
+      form.kalori = data.kalori
+      form.protein = data.protein
+      form.prep_time = data.prep_time
+      
+      // Load kategori_diet dari database ke state form
+      form.kategori_diet = Array.isArray(data.kategori_diet) ? data.kategori_diet : []
+      
+      form.bahan = Array.isArray(data.bahan) && data.bahan.length > 0 ? data.bahan : ['']
+      form.langkah = Array.isArray(data.langkah) && data.langkah.length > 0 ? data.langkah : ['']
+    }
+  } catch (error) {
+    console.error('Error fetching recipe:', error.message)
+    alert('Gagal mengambil data resep.')
+  } finally {
+    fetching.value = false
   }
 }
+
+onMounted(() => {
+  if (recipeId) {
+    fetchRecipeData()
+  } else {
+    alert("ID resep tidak ditemukan!")
+    router.push('/RecipeManagement')
+  }
+})
 
 const addIngredient = () => form.bahan.push('')
 const removeIngredient = (idx) => {
   if (form.bahan.length > 1) form.bahan.splice(idx, 1)
 }
+
 const addStep = () => form.langkah.push('')
 const removeStep = (idx) => {
   if (form.langkah.length > 1) form.langkah.splice(idx, 1)
 }
 
 const handleSubmit = async () => {
-  // Validasi agar minimal satu kategori terpilih
+  // Validasi kategori diet
   if (form.kategori_diet.length === 0) {
     alert("Please select at least one diet category!")
     return
@@ -156,56 +200,35 @@ const handleSubmit = async () => {
 
   try {
     loading.value = true
-    let uploadedImageUrl = null
-
-    if (selectedFile.value) {
-      const fileExt = selectedFile.value.name.split('.').pop()
-      const fileName = `${Date.now()}.${fileExt}`
-
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('recipe_images')
-        .upload(fileName, selectedFile.value)
-
-      if (uploadError) throw uploadError
-
-      const { data: publicUrlData } = supabase.storage
-        .from('recipe_images')
-        .getPublicUrl(fileName)
-
-      uploadedImageUrl = publicUrlData.publicUrl
-    }
 
     const cleanBahan = form.bahan.filter(item => item.trim() !== '')
     const cleanLangkah = form.langkah.filter(item => item.trim() !== '')
 
-    // Payload dengan kolom kategori_diet (array of strings)
     const payload = {
       nama_resep: form.nama_resep,
       deskripsi: form.deskripsi,
+      img_url: form.img_url,
       kalori: form.kalori,
       protein: form.protein,
       prep_time: form.prep_time,
-      kategori_diet: form.kategori_diet, 
+      kategori_diet: form.kategori_diet, // Sertakan array kategori saat update
       bahan: cleanBahan,
       langkah: cleanLangkah,
-      img_url: uploadedImageUrl,
-      id_pengguna: '660ab90e-0e45-468e-a28c-f48b60594dd8', 
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString() 
     }
 
-    const { error: insertError } = await supabase
+    const { error } = await supabase
       .from('resep')
-      .insert([payload])
+      .update(payload)
+      .eq('id_resep', recipeId)
 
-    if (insertError) throw insertError
+    if (error) throw error
 
-    alert('Recipe added successfully!')
+    alert('Recipe updated successfully!')
     router.push('/RecipeManagement') 
-    
   } catch (error) {
-    console.error("Error submitting recipe:", error.message)
-    alert("Gagal menambahkan resep: " + error.message)
+    console.error('Error updating recipe:', error.message)
+    alert('Gagal memperbarui resep.')
   } finally {
     loading.value = false
   }
@@ -251,6 +274,8 @@ const handleSubmit = async () => {
 .form-title { font-size: 1.875rem; font-weight: 700; color: #111827; margin-bottom: 0.25rem; }
 .form-subtitle { color: #6B7280; margin-bottom: 2rem; font-size: 1rem; }
 
+.loading-state { text-align: center; padding: 3rem; color: #6B7280; font-size: 1.125rem; }
+
 .form-card { 
   background: white; 
   padding: 2.5rem; 
@@ -264,6 +289,7 @@ const handleSubmit = async () => {
 
 .input-group { margin-bottom: 1.25rem; }
 .input-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+/* Pengecualian checkbox agar ukurannya tidak memanjang 100% */
 .input-group input:not([type="checkbox"]), .input-group textarea { 
   width: 100%; 
   padding: 0.75rem 1rem; 
@@ -275,7 +301,7 @@ const handleSubmit = async () => {
 }
 .input-group input:focus, .input-group textarea:focus { border-color: #22C55E; background-color: white; outline: none; }
 
-/* Styling Checkbox Group */
+/* Styling Checkbox Group (Sama dengan AddRecipe) */
 .help-text-inline { font-weight: normal; color: #6B7280; font-size: 0.75rem; margin-left: 4px; }
 .checkbox-group {
   display: flex;
@@ -297,19 +323,6 @@ const handleSubmit = async () => {
   height: 1.25rem;
   accent-color: #22C55E;
   cursor: pointer;
-}
-
-.file-input {
-  background-color: white !important;
-  padding: 0.5rem !important;
-  border: 1px dashed #D1D5DB !important;
-  cursor: pointer;
-}
-.help-text {
-  display: block;
-  font-size: 0.75rem;
-  color: #6B7280;
-  margin-top: 0.25rem;
 }
 
 .row-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
@@ -350,7 +363,17 @@ const handleSubmit = async () => {
   margin-top: 0.25rem;
 }
 
-.delete-btn { background: none; border: none; cursor: pointer; padding: 0.5rem; transition: 0.2s; margin-top: 0.25rem; display: flex; align-items: center; justify-content: center; }
+.delete-btn { 
+  background: none; 
+  border: none; 
+  cursor: pointer; 
+  padding: 0.5rem; 
+  transition: 0.2s; 
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .delete-btn svg { transition: stroke 0.2s; }
 .delete-btn:hover svg { stroke: #B91C1C; }
 

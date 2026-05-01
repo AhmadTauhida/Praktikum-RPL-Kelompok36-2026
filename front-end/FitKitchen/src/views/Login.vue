@@ -10,6 +10,11 @@
 
     <div class="login-card">
       <form @submit.prevent="handleLogin">
+        
+        <div v-if="loginError" class="alert-error">
+          {{ loginError }}
+        </div>
+
         <div class="form-group">
           <label for="email">Email</label>
           <div class="input-wrapper">
@@ -49,7 +54,9 @@
           </div>
         </div>
 
-        <button type="submit" class="btn-login" :disabled="!isFormValid">Log In</button>
+        <button type="submit" class="btn-login" :disabled="!isFormValid || loading">
+          {{ loading ? 'Verifying...' : 'Log In' }}
+        </button>
       </form>
 
       <div class="login-footer">
@@ -62,6 +69,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabaseClient' // Pastikan path import ini benar
+
+// Import Icons
 import logo from '../assets/icons/logo.png'
 import mail from '../assets/icons/mail.svg'
 import lock from '../assets/icons/lock.svg'
@@ -71,13 +81,11 @@ import eyesoff from '../assets/icons/eye-off.svg'
 const email = ref('')
 const password = ref('')
 const emailError = ref('')
+const loginError = ref('') // Untuk menangkap pesan error dari Supabase
 const showPassword = ref(false)
-const router = useRouter()
-const ADMIN_EMAIL = 'admin@fitkitchen.com'
-const ADMIN_PASSWORD = 'admin123'
-const USER_EMAIL = 'user@fitkitchen.com'
-const USER_PASSWORD = 'user123'
+const loading = ref(false) // Indikator proses login
 
+const router = useRouter()
 
 // Fungsi Validasi Format Email
 const validateEmail = () => {
@@ -91,219 +99,101 @@ const validateEmail = () => {
   }
 }
 
-
 const isFormValid = computed(() => {
   return email.value && password.value && !emailError.value
 })
 
-const handleLogin = () => {
+const handleLogin = async () => {
   validateEmail() 
-  // Simulasi login sukses
-  if (isFormValid.value) {
-    if (email.value === ADMIN_EMAIL && password.value === ADMIN_PASSWORD) {
-      // Simulasi menyimpan sesi (bisa pakai localStorage)
+  if (!isFormValid.value) return
+
+  try {
+    loading.value = true
+    loginError.value = '' // Reset error
+
+    // 1. Proses Login via Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.value,
+      password: password.value,
+    })
+
+    if (authError) throw authError
+
+    // 2. Ambil ID User yang baru saja login
+    const userId = authData.user.id
+
+    // 3. Cek Role: Apakah user ini terdaftar di tabel admin?
+    const { data: adminData, error: adminError } = await supabase
+      .from('admin')
+      .select('role')
+      .eq('id_admin', userId)
+      .maybeSingle() // maybeSingle: Mengembalikan data jika ada, atau null jika tidak (tanpa melempar error)
+
+    if (adminError) throw adminError
+
+    // 4. Logika Penentuan Akses
+    if (adminData) {
+      // User adalah Admin
       localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('userRole', 'admin')
+      localStorage.setItem('userRole', adminData.role || 'admin') // Simpan role spesifik (superadmin/admin)
       
-      // Arahkan ke halaman Admin
-      router.push('/admin') // Sesuaikan dengan route halaman Admin kamu
-      alert('Login Berhasil! Selamat datang Admin.')
-    } else if (email.value === USER_EMAIL && password.value === USER_PASSWORD) {
-      // Simulasi login user biasa
+      router.push('/admin') // Arahkan ke halaman Admin
+    } else {
+      // User adalah Pengguna Biasa
       localStorage.setItem('isAuthenticated', 'true')
       localStorage.setItem('userRole', 'user')
-
-      // Arahkan ke halaman utama atau profil user
-      router.push('/')
-      alert('Login Berhasil! Selamat datang User.')
-    } else {
-      // Jika salah, munculkan peringatan
-      alert('Email atau Password salah!')
+      
+      router.push('/') // Arahkan ke halaman beranda
     }
+
+  } catch (error) {
+    console.error('Login Error:', error.message)
+    // Tampilkan pesan error ke layar (misal: "Invalid login credentials")
+    loginError.value = error.message 
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.login-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background-color: #ffffff;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.logo-wrapper {
-  background-color: #2ecc71; 
-  width: 80px;
-  height: 80px;
-  border-radius: 20px; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-}
-
-.login-logo {
-  width: 50px;
-  height: auto;
-  filter: brightness(0) invert(1);
-}
-
-.login-header h1 {
-  font-size: 2rem;
-  color: #1a1a1a;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-.login-header p {
-  color: #666;
-  font-size: 1rem;
-}
-
-.login-card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  width: 100%;
-  max-width: 450px;
-  border: 1px solid #f0f0f0;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.icon-eye {
-  width: 20px;
-  height: auto;
-  opacity: 0.6;
-  transition: opacity 0.3s;
-}
-
-.toggle-password:hover .icon-eye {
-  opacity: 1;
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-wrapper .icon {
-  position: absolute;
-  left: 12px;
-  width: 20px; 
-  height: auto;
-  color: #999;
-}
-
-.input-wrapper input {
-  width: 100%;
-  padding: 12px 45px 12px 40px; 
-  border: 1px solid #eee;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-}
-
-.input-wrapper input:focus {
-  outline: none;
-  border-color: #2ecc71;
-  background-color: #fff;
-  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1);
-}
-
-/* CSS untuk Tombol Toggle Password */
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.2rem;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-  transition: color 0.3s;
-}
-
-.toggle-password:hover {
-  color: #2ecc71;
-}
-
-/* CSS untuk Validasi Error */
-.input-error {
-  border-color: #e74c3c !important;
-  background-color: #fdf2f2 !important;
-}
-
-.error-text {
+/* Tambahan styling untuk pesan error Supabase */
+.alert-error {
+  background-color: #fdf2f2;
   color: #e74c3c;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
-  display: block;
-}
-
-.btn-login {
-  width: 100%;
-  padding: 14px;
-  background-color: #2ecc71;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 1rem;
-}
-
-.btn-login:hover {
-  background-color: #27ae60;
-}
-
-/* State ketika tombol dinonaktifkan */
-.btn-login:disabled {
-  background-color: #95a5a6;
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-.login-footer {
-  margin-top: 1.5rem;
-  text-align: center;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #fadcdc;
   font-size: 0.9rem;
-  color: #666;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 500;
 }
 
-.signup-link {
-  color: #2ecc71;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.signup-link:hover {
-  text-decoration: underline;
-}
+/* Sisa style tetap sama persis seperti kode aslimu */
+.login-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #ffffff; }
+.login-header { text-align: center; margin-bottom: 2rem; }
+.logo-wrapper { background-color: #2ecc71; width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+.login-logo { width: 50px; height: auto; filter: brightness(0) invert(1); }
+.login-header h1 { font-size: 2rem; color: #1a1a1a; margin-bottom: 0.5rem; font-weight: 700; }
+.login-header p { color: #666; font-size: 1rem; }
+.login-card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); width: 100%; max-width: 450px; border: 1px solid #f0f0f0; }
+.form-group { margin-bottom: 1.5rem; }
+.form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 0.5rem; }
+.icon-eye { width: 20px; height: auto; opacity: 0.6; transition: opacity 0.3s; }
+.toggle-password:hover .icon-eye { opacity: 1; }
+.input-wrapper { position: relative; display: flex; align-items: center; }
+.input-wrapper .icon { position: absolute; left: 12px; width: 20px; height: auto; color: #999; }
+.input-wrapper input { width: 100%; padding: 12px 45px 12px 40px; border: 1px solid #eee; border-radius: 10px; background-color: #f9f9f9; font-size: 1rem; transition: all 0.3s ease; }
+.input-wrapper input:focus { outline: none; border-color: #2ecc71; background-color: #fff; box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1); }
+.toggle-password { position: absolute; right: 12px; background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0; display: flex; align-items: center; justify-content: center; color: #999; transition: color 0.3s; }
+.toggle-password:hover { color: #2ecc71; }
+.input-error { border-color: #e74c3c !important; background-color: #fdf2f2 !important; }
+.error-text { color: #e74c3c; font-size: 0.8rem; margin-top: 0.25rem; display: block; }
+.btn-login { width: 100%; padding: 14px; background-color: #2ecc71; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; margin-top: 1rem; }
+.btn-login:hover { background-color: #27ae60; }
+.btn-login:disabled { background-color: #95a5a6; cursor: not-allowed; opacity: 0.7; }
+.login-footer { margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: #666; }
+.signup-link { color: #2ecc71; text-decoration: none; font-weight: 600; }
+.signup-link:hover { text-decoration: underline; }
 </style>

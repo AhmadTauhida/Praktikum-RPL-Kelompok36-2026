@@ -12,6 +12,8 @@ import Calculator from '../views/Calculator.vue'
 import UserManagement from '../views/userManagement.vue'
 import AddRecipe from '../views/AddRecipe.vue'
 import AdminDashboard from '../views/AdminDashboard.vue' 
+import editResep from '../views/editResep.vue'
+import path from 'node:path'
 
 
 
@@ -71,6 +73,11 @@ const routes = [
     path: '/admin',
     name: 'AdminDashboard',
     component: AdminDashboard
+  },
+  {
+    path: '/edit-resep/:id',
+    name: 'EditResep',
+    component: editResep
   }
 ]
 

@@ -44,30 +44,38 @@
         </div>
 
         <div class="table-body">
-          <div v-for="recipe in filteredRecipes" :key="recipe.id" class="table-row">
+          <div v-if="loading" class="table-row" style="justify-content: center; padding: 2rem;">
+            Loading recipes...
+          </div>
+          <div v-else v-for="recipe in filteredRecipes" :key="recipe.id_resep" class="table-row">
             <div class="col-img">
-              <img :src="recipe.image" :alt="recipe.title" class="recipe-thumbnail" />
+              <img 
+                  :src="recipe.img_url" 
+                  :alt="recipe.nama_resep" 
+                  class="recipe-thumbnail" 
+                  @error="handleImageError"
+              />
             </div>
             <div class="col-name">
-              <h4 class="recipe-title">{{ recipe.title }}</h4>
-              <p class="recipe-desc">{{ recipe.description }}</p>
+              <h4 class="recipe-title">{{ recipe.nama_resep }}</h4>
+              <p class="recipe-desc">{{ recipe.deskripsi }}</p>
             </div>
             <div class="col-category">
-              <span class="badge">{{ getCategory(recipe.id) }}</span>
+              <span class="badge">{{ recipe.category }}</span>
             </div>
             <div class="col-calories stat-group">
-              <img :src="recipe.calIcon" alt="Calories" class="stat-icon" /> 
-              <span>{{ recipe.calories }}</span>
+              <img :src="calories" alt="Calories" class="stat-icon" /> 
+              <span>{{ recipe.kalori }}</span>
             </div>
             <div class="col-protein stat-group">
-              <img :src="recipe.proIcon" alt="Protein" class="stat-icon" /> 
+              <img :src="protein" alt="Protein" class="stat-icon" /> 
               <span>{{ recipe.protein }}g</span>
             </div>
             <div class="col-actions">
-              <button class="btn-action edit" @click="editRecipe(recipe.id)" title="Edit">
+              <button class="btn-action edit" @click="editRecipe(recipe.id_resep)" title="Edit">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
               </button>
-              <button class="btn-action delete" @click="deleteRecipe(recipe.id)" title="Delete">
+              <button class="btn-action delete" @click="deleteRecipe(recipe.id_resep)" title="Delete">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
               </button>
             </div>
@@ -80,40 +88,91 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { recipes } from '../data/recipes.js' 
+import { ref, computed, onMounted } from 'vue' 
+import { useRouter } from 'vue-router' 
+import { supabase } from '../lib/supabaseClient' 
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 
+// Import icon statis
+import calories from '../assets/icons/Calori.png'
+import protein from '../assets/icons/protein.png'
+
+const router = useRouter() 
+const recipes = ref([]) 
 const searchQuery = ref('')
+const loading = ref(true) 
+
+const fetchRecipes = async () => {
+  try {
+    loading.value = true
+    const { data, error } = await supabase
+      .from('resep')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    // PERBAIKAN DI SINI
+    recipes.value = data.map(item => ({
+      ...item, // Menyalin otomatis semua kolom asli dari Supabase (id_resep, nama_resep, kalori, img_url, dll)
+      category: item.kategori_diet && item.kategori_diet.length > 0 
+                ? item.kategori_diet.join(', ') 
+                : 'Balanced'
+    }))
+  } catch (error) {
+    console.error('Error:', error.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+// Menangani jika gambar gagal dimuat/kosong
+const handleImageError = (e) => {
+  e.target.src = 'https://via.placeholder.com/50?text=No+Image'
+}
 
 const filteredRecipes = computed(() => {
-  if (!searchQuery.value) return recipes
+  if (!searchQuery.value) return recipes.value
   const lowerCaseQuery = searchQuery.value.toLowerCase()
-  return recipes.filter(recipe => 
-    recipe.title.toLowerCase().includes(lowerCaseQuery) || 
-    recipe.description.toLowerCase().includes(lowerCaseQuery)
+  return recipes.value.filter(recipe => 
+    recipe.nama_resep.toLowerCase().includes(lowerCaseQuery) || 
+    (recipe.deskripsi && recipe.deskripsi.toLowerCase().includes(lowerCaseQuery))
   )
 })
 
-const getCategory = (id) => {
-  if ([1, 5].includes(id)) return 'Breakfast'
-  if ([2, 3, 6].includes(id)) return 'Lunch'
-  return 'Dinner'
-}
+onMounted(() => {
+  fetchRecipes()
+})
 
+// 1. FITUR EDIT: Navigasi ke halaman edit dengan ID
 const editRecipe = (id) => {
-  console.log('Edit recipe clicked for ID:', id)
+  router.push(`/edit-resep/${id}`)
 }
 
-const deleteRecipe = (id) => {
-  if(confirm('Are you sure you want to delete this recipe?')) {
-    console.log('Delete recipe confirmed for ID:', id)
+// 2. FITUR DELETE: Pop-up konfirmasi dan hapus dari Supabase
+const deleteRecipe = async (id) => {
+  const yakin = confirm('Apakah anda ingin menghapus resep ini?')
+  
+  if (yakin) {
+    try {
+      const { error } = await supabase
+        .from('resep')
+        .delete()
+        .eq('id_resep', id) 
+
+      if (error) throw error
+
+      alert('Resep berhasil dihapus!')
+      fetchRecipes() // Refresh daftar resep 
+      
+    } catch (err) {
+      alert('Gagal menghapus resep: ' + err.message)
+    }
   }
 }
 </script>
 
 <style scoped>
-/* Class baru untuk layout utama tanpa padding */
 .admin-layout {
   background-color: #fafafa;
   min-height: 100vh;

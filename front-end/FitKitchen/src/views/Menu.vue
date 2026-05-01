@@ -1,7 +1,11 @@
 <template>
   <NavbarUser />
 
-  <div class="container" v-if="recipe">
+  <div v-if="loading" class="loading-state">
+    <p>Loading recipe details...</p>
+  </div>
+
+  <div class="container" v-else-if="recipe">
     <div class="back-nav">
       <button @click="goBack" class="btn-back">
         <span class="arrow">←</span> Back
@@ -16,7 +20,7 @@
       <div class="title-section">
         <div class="badges">
           <span class="badge diet">{{ recipe.diet }}</span>
-          <span class="badge category">Breakfast</span>
+          <span class="badge category">Recipe</span>
         </div>
         <h1>{{ recipe.title }}</h1>
         <p class="description">{{ recipe.description }}</p>
@@ -24,24 +28,24 @@
 
       <div class="info-grid">
         <div class="info-box">
-          <img :src="recipe.calIcon" alt="Calorie Icon" class="icon" />
+          <img :src="caloriesIcon" alt="Calorie Icon" class="icon" />
           <div class="info-text">
             <span class="label">Calories</span>
             <span class="value">{{ recipe.calories }}</span>
           </div>
         </div>
         <div class="info-box">
-          <img :src="recipe.proIcon" alt="Protein Icon" class="icon" />
+          <img :src="proteinIcon" alt="Protein Icon" class="icon" />
           <div class="info-text">
             <span class="label">Protein</span>
             <span class="value">{{ recipe.protein }}g</span>
           </div>
         </div>
         <div class="info-box">
-          <img :src="recipe.timeIcon" alt="Time Icon" class="icon" />
+          <img :src="timeIcon" alt="Time Icon" class="icon" />
           <div class="info-text">
             <span class="label">Prep Time</span>
-            <span class="value">{{ recipe.prepTime }}</span>
+            <span class="value">{{ recipe.prepTime }} min</span>
           </div>
         </div>
       </div>
@@ -73,21 +77,66 @@
 
   <div v-else class="not-found">
     <h2>Recipe not found!</h2>
+    <button @click="goBack" class="btn-back" style="margin: 20px auto;">Go Back</button>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { recipes } from '../data/recipes.js'
+import { supabase } from '../lib/supabaseClient' // Import Supabase Client
 import NavbarUser from '../components/NavbarUser.vue'
+
+// Import asset lokal untuk Icon yang tadinya numpang di objek recipe
+import caloriesIcon from '../assets/icons/Calori.svg'
+import proteinIcon from '../assets/icons/protein.svg'
+import timeIcon from '../assets/icons/clock.svg' 
 
 const route = useRoute()
 const router = useRouter()
 
-const recipe = computed(() => {
-  const currentId = Number(route.params.id)
-  return recipes.find(r => r.id === currentId)
+const recipe = ref(null)
+const loading = ref(true)
+
+// Mengambil 1 resep berdasarkan ID dari URL parameter
+const fetchRecipeDetails = async () => {
+  try {
+    loading.value = true
+    const currentId = route.params.id
+
+    const { data, error } = await supabase
+      .from('resep')
+      .select('*')
+      .eq('id_resep', currentId)
+      .single()
+
+    if (error) throw error
+
+    if (data) {
+      // Memetakan (Mapping) data database ke format yang digunakan template HTML
+      recipe.value = {
+        id: data.id_resep,
+        title: data.nama_resep,
+        description: data.deskripsi,
+        image: data.img_url || 'https://via.placeholder.com/900x400?text=No+Image',
+        calories: data.kalori,
+        protein: data.protein,
+        prepTime: data.prep_time,
+        ingredients: Array.isArray(data.bahan) ? data.bahan : [],
+        steps: Array.isArray(data.langkah) ? data.langkah : [],
+        diet: data.diet ? data.diet.toLowerCase() : 'balanced' // Fallback
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching recipe details:', error.message)
+    recipe.value = null // Biarkan null agar block "Recipe not found!" muncul
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchRecipeDetails()
 })
 
 const goBack = () => {
@@ -96,6 +145,14 @@ const goBack = () => {
 </script>
 
 <style scoped>
+/* Tambahan class untuk Loading */
+.loading-state {
+  text-align: center;
+  padding: 100px;
+  font-size: 1.2rem;
+  color: #666;
+}
+
 .container {
   max-width: 900px;
   margin: 0 auto;
@@ -125,6 +182,7 @@ const goBack = () => {
   overflow: hidden;
   border-radius: 20px;
   margin-bottom: 30px;
+  background-color: #E5E7EB;
 }
 .hero-image {
   width: 100%;
@@ -137,7 +195,7 @@ const goBack = () => {
   margin: 10px 0;
   font-weight: 700;
 }
-.description { color: #888; margin-bottom: 25px; }
+.description { color: #888; margin-bottom: 25px; line-height: 1.5; }
 
 /* Badges */
 .badges { display: flex; gap: 10px; }
@@ -169,15 +227,6 @@ const goBack = () => {
   border: 1px solid #f0f0f0;
 }
 .icon { width: 32px; height: 32px; }
-.icon-circle {
-  width: 32px;
-  height: 32px;
-  background: #E8F5E9;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .info-text { display: flex; flex-direction: column; }
 .label { font-size: 12px; color: #999; }
 .value { font-size: 18px; font-weight: 700; }

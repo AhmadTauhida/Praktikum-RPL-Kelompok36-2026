@@ -1,6 +1,6 @@
 <template>
   <div class="FitKitchen">
-  <NavbarUser />
+    <NavbarUser />
 
     <section class="hero">
       <div class="hero-content">
@@ -22,79 +22,94 @@
         </div>
         
         <div class="dropdowns">
-        <div class="filter-wrapper">
-          <img :src="filter" alt="Filter" class="filter-icon" />
-          <select v-model="selectedDiet" class="filter-select has-icon">
-            <option value="All">All Diets</option>
-            <option value="vegetarian">Vegetarian</option>
-            <option value="paleo">Paleo</option>
-            <option value="vegan">Vegan</option>
-            <option value="keto">Keto</option>
-            <option value="balanced">Balanced</option>
-          </select>
-        </div>
+          <div class="filter-wrapper">
+            <img :src="filter" alt="Filter" class="filter-icon" />
+            <select v-model="selectedDiet" class="filter-select has-icon">
+              <option value="All">All Diets</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="paleo">Paleo</option>
+              <option value="keto">Keto</option>
+              <option value="balanced">Balanced</option>
+            </select>
+          </div>
 
-        <div class="filter-wrapper">
-          
+          <div class="filter-wrapper">
             <select v-model="selectedSort" class="filter-select">
               <option value="none">Sort by: Default</option>
               <option value="low-cal">Lowest Calorie</option>
               <option value="high-pro">Highest Protein</option>
-             </select>
+            </select>
           </div>
         </div>
       </div>
 
-      <div class="results-count">
-        <p>Showing <strong>{{ filteredRecipes.length }}</strong> recipes</p>
+      <div v-if="loading" class="loading-state">
+        <p>Loading recipes...</p>
       </div>
 
-      <transition-group name="list" tag="div" class="recipe-grid">
-        <div 
-          class="recipe-card" 
-          v-for="recipe in filteredRecipes" 
-          :key="recipe.id"
-          @click="goToRecipe(recipe.id)"
-        >
-          <div class="card-image">
-            <img :src="recipe.image" :alt="recipe.title" class="img-placeholder" />
-            <span class="diet-tag" :class="recipe.diet">{{ recipe.diet }}</span>
-          </div>
-          <div class="card-content">
-            <h3>{{ recipe.title }}</h3>
-            <p>{{ recipe.description }}</p>
-            <div class="card-meta">
-              <span class="meta-item">
-                <img :src="calories" alt="Calories" class="meta-icon" />
-                 {{ recipe.calories }} cal
-              </span>
-              <span class="meta-item">
-                <img :src="protein" alt="Protein" class="meta-icon" />
-                 {{ recipe.protein }}g protein
-              </span>
+      <div v-else>
+        <div class="results-count">
+          <p>Showing <strong>{{ filteredRecipes.length }}</strong> recipes</p>
+        </div>
+
+        <transition-group name="list" tag="div" class="recipe-grid">
+          <div 
+            class="recipe-card" 
+            v-for="recipe in filteredRecipes" 
+            :key="recipe.id"
+            @click="goToRecipe(recipe.id)"
+          >
+            <div class="card-image">
+              <img :src="recipe.image" :alt="recipe.title" class="img-placeholder" />
+              <!-- Menampilkan kumpulan tag untuk array kategori -->
+              <div class="diet-tags">
+                <span 
+                  v-for="(tag, index) in recipe.diets" 
+                  :key="index"
+                  class="diet-tag" 
+                  :class="tag.toLowerCase()"
+                >
+                  {{ tag }}
+                </span>
+              </div>
+            </div>
+            <div class="card-content">
+              <h3>{{ recipe.title }}</h3>
+              <p>{{ recipe.description }}</p>
+              <div class="card-meta">
+                <span class="meta-item">
+                  <img :src="calories" alt="Calories" class="meta-icon" />
+                   {{ recipe.calories }} cal
+                </span>
+                <span class="meta-item">
+                  <img :src="protein" alt="Protein" class="meta-icon" />
+                   {{ recipe.protein }}g protein
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </transition-group>
+        </transition-group>
+      </div>
 
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { supabase } from '../lib/supabaseClient' 
 import NavbarUser from '../components/NavbarUser.vue'
+
+// Icons
 import searchIcon from '../assets/icons/search.png'
 import protein from '../assets/icons/protein.png'
 import calories from '../assets/icons/Calori.png'
 import filter from '../assets/icons/filter.png'
-import { recipes as recipeData } from '../data/recipes.js';
-import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
 const goToRecipe = (id) => {
-  
   router.push(`/menu/${id}`)
 }
 
@@ -102,24 +117,58 @@ const searchQuery = ref('')
 const selectedDiet = ref('All')
 const selectedSort = ref('none')
 
+const recipes = ref([])
+const loading = ref(true)
 
-const recipes = ref(recipeData)
+const fetchRecipes = async () => {
+  try {
+    loading.value = true
+    const { data, error } = await supabase
+      .from('resep')
+      .select('*')
+      .order('created_at', { ascending: false }) 
 
-// Logika Filter & Sorting
+    if (error) throw error
+
+    recipes.value = data.map(item => ({
+      id: item.id_resep,
+      title: item.nama_resep,
+      description: item.deskripsi,
+      image: item.img_url || 'https://via.placeholder.com/300x200?text=No+Image',
+      calories: item.kalori,
+      protein: item.protein,
+      // Mengambil data dari array kategori_diet PostgreSQL
+      diets: item.kategori_diet && item.kategori_diet.length > 0 ? item.kategori_diet : ['Balanced'] 
+    }))
+
+  } catch (error) {
+    console.error('Error fetching recipes:', error.message)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchRecipes()
+})
+
 const filteredRecipes = computed(() => {
   let result = recipes.value
 
-  // Filter berdasarkan Diet
+  // Filter berdasarkan Array Diet
   if (selectedDiet.value !== 'All') {
-    result = result.filter(r => r.diet === selectedDiet.value)
+    const dietToFind = selectedDiet.value.toLowerCase()
+    result = result.filter(r => 
+      r.diets.some(tag => tag.toLowerCase() === dietToFind)
+    )
   }
 
-  // Filter berdasarkan Pencarian (Judul atau Deskripsi)
+  // Filter berdasarkan Pencarian
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(r => 
       r.title.toLowerCase().includes(q) || 
-      r.description.toLowerCase().includes(q)
+      (r.description && r.description.toLowerCase().includes(q))
     )
   }
 
@@ -135,7 +184,12 @@ const filteredRecipes = computed(() => {
 </script>
 
 <style scoped>
-
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+  color: #666;
+}
 
 .landing-page {
   font-family: 'Inter', sans-serif; 
@@ -143,9 +197,7 @@ const filteredRecipes = computed(() => {
   min-height: 100vh;
 }
 
-
 .hero {
-  
   background: linear-gradient(90deg, #E8F5E9 0%, #FFF3E0 100%);
   padding: 60px 40px;
 }
@@ -161,14 +213,12 @@ const filteredRecipes = computed(() => {
   font-size: 16px;
 }
 
-/* MAIN CONTENT */
 .content-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 20px;
 }
 
-/* FILTER BAR */
 .filter-bar {
   display: flex;
   justify-content: space-between;
@@ -246,7 +296,6 @@ const filteredRecipes = computed(() => {
   padding-right: 30px; 
 }
 
-/* RECIPE GRID */
 .recipe-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -271,7 +320,7 @@ const filteredRecipes = computed(() => {
 .card-image {
   position: relative;
   height: 200px;
-  background-color: #E5E7EB; /* Placeholder bg jika gambar mati */
+  background-color: #E5E7EB; 
 }
 
 .img-placeholder {
@@ -280,22 +329,30 @@ const filteredRecipes = computed(() => {
   object-fit: cover;
 }
 
-.diet-tag {
+/* Penyesuaian Flexbox untuk multiple tags */
+.diet-tags {
   position: absolute;
   top: 12px;
   right: 12px;
+  display: flex;
+  flex-direction: column; /* Menyusun ke bawah agar tidak menutupi gambar menyamping */
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.diet-tag {
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
   color: white;
   text-transform: capitalize;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Tambahan shadow agar kontras dengan gambar */
 }
 
 /* Warna Tag Diet Spesifik */
 .vegetarian { background-color: #F97316; }
 .paleo { background-color: #D97706; }
-.vegan { background-color: #F59E0B; }
 .keto { background-color: #EA580C; }
 .balanced { background-color: #E11D48; }
 
@@ -307,6 +364,10 @@ const filteredRecipes = computed(() => {
   margin: 0 0 8px 0;
   font-size: 16px;
   color: #1F2937;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-content p {
@@ -314,6 +375,10 @@ const filteredRecipes = computed(() => {
   color: #6B7280;
   margin-bottom: 16px;
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-meta {
@@ -324,7 +389,6 @@ const filteredRecipes = computed(() => {
   font-weight: 500;
 }
 
-/* ANIMASI TRANSISI LIST VUE */
 .list-enter-active,
 .list-leave-active {
   transition: all 0.4s ease;
