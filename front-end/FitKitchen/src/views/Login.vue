@@ -109,9 +109,9 @@ const handleLogin = async () => {
 
   try {
     loading.value = true
-    loginError.value = '' // Reset error
+    loginError.value = ''
 
-    // 1. Proses Login via Supabase Auth
+    // 1. Login via Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: email.value,
       password: password.value,
@@ -119,37 +119,45 @@ const handleLogin = async () => {
 
     if (authError) throw authError
 
-    // 2. Ambil ID User yang baru saja login
     const userId = authData.user.id
 
-    // 3. Cek Role: Apakah user ini terdaftar di tabel admin?
-    const { data: adminData, error: adminError } = await supabase
+    // 2. Cek apakah ini Admin
+    const { data: adminData } = await supabase
       .from('admin')
       .select('role')
       .eq('id_admin', userId)
-      .maybeSingle() // maybeSingle: Mengembalikan data jika ada, atau null jika tidak (tanpa melempar error)
+      .maybeSingle()
 
-    if (adminError) throw adminError
-
-    // 4. Logika Penentuan Akses
     if (adminData) {
-      // User adalah Admin
-      localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('userRole', adminData.role || 'admin') // Simpan role spesifik (superadmin/admin)
-      
-      router.push('/admin') // Arahkan ke halaman Admin
-    } else {
-      // User adalah Pengguna Biasa
-      localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('userRole', 'user')
-      
-      router.push('/') // Arahkan ke halaman beranda
+      localStorage.setItem('userRole', adminData.role || 'admin')
+      router.push('/admin')
+      return // Selesai
     }
+
+    // 3. JIKA BUKAN ADMIN: Cek apakah data ada di tabel 'pengguna'
+    const { data: userData, error: userTableError } = await supabase
+      .from('pengguna')
+      .select('username')
+      .eq('id_pengguna', userId)
+      .maybeSingle()
+
+    if (userTableError) throw userTableError
+
+    if (!userData) {
+      // Kasus: Akun ada di Auth, tapi baris data di tabel 'pengguna' hilang
+      // Ini yang bikin Profile.vue kamu null/kosong
+      throw new Error('Data profil pengguna tidak ditemukan di database.')
+    }
+
+    // 4. Jika semua oke, baru arahkan ke home
+    localStorage.setItem('userRole', 'user')
+    router.push('/')
 
   } catch (error) {
     console.error('Login Error:', error.message)
-    // Tampilkan pesan error ke layar (misal: "Invalid login credentials")
     loginError.value = error.message 
+    // Jika gagal, sebaiknya paksa logout dari auth agar sesi tidak menggantung
+    await supabase.auth.signOut()
   } finally {
     loading.value = false
   }
