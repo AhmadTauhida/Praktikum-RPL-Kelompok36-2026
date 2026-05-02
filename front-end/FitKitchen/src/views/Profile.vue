@@ -97,7 +97,7 @@
               </div>
               <div class="info-text">
                 <span class="label">Gender</span>
-                <select v-if="isEditing" v-model="userData.gender" class="edit-input">
+                <select v-if="isEditing" v-model="userData.gender" class="edit-input" disabled title="Gender harus sama dengan saat pendaftaran">
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
@@ -153,7 +153,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '../lib/supabaseClient' 
 
-// Import Icons (Tetap sama)
+
 import profile from '../assets/icons/profile.png'
 import mail from '../assets/icons/mail.svg'
 import weight from '../assets/icons/weight.svg'
@@ -172,7 +172,7 @@ const userGoals = ref({ target_kalori: 0, target_protein: 0 })
 
 let authSubscription = null
 
-// Fungsi ambil data dari Supabase
+
 const fetchUserProfile = async (userId) => {
   if (!userId) {
     isLoading.value = false
@@ -180,7 +180,7 @@ const fetchUserProfile = async (userId) => {
   }
   
   try {
-    // Jangan set isLoading = true di sini agar tidak memicu flicker saat update data
+   
     const { data, error } = await supabase
       .from('pengguna')
       .select('*')
@@ -230,7 +230,7 @@ onMounted(async () => {
   // 2. Pasang Listener (Hanya satu kali)
   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
     if (session?.user) {
-      // Hanya fetch jika data lokal masih kosong
+      
       if (!userData.value) {
         fetchUserProfile(session.user.id)
       }
