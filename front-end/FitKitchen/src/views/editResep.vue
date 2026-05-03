@@ -115,7 +115,6 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { supabase } from '../lib/supabaseClient'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 import backButton from '../assets/icons/backButton.svg'
 
