@@ -11,7 +11,6 @@ function increment() {
 </script>
 
 <template>
-<<<<<<< HEAD
   <div class="page-container">
     <NavbarAdmin />
 
@@ -53,8 +52,8 @@ function increment() {
               <td class="email-cell">
                 <img :src="mail" alt="mail" class="icon-small" /> {{ user.email }}
               </td>
-              <td><img :src="weightIcon" class="icon-small" /> {{ user.berat_badan }} kg</td>
-              <td><img :src="heightIcon" class="icon-small" /> {{ user.tinggi_badan }} cm</td>
+              <td><img :src="weightIcon" class="icon-small" /> {{ user.weight }} kg</td>
+              <td><img :src="heightIcon" class="icon-small" /> {{ user.height }} cm</td>
               <td>
                 <span :class="['badge', user.gender.toLowerCase()]">{{ user.gender }}</span>
               </td>
@@ -89,7 +88,7 @@ const loading = ref(true) // Tambahkan status loading
 const fetchUsers = async () => {
   try {
     loading.value = true
-  
+    // Pastikan nama tabel 'pengguna' sesuai dengan yang ada di database
     const { data, error } = await supabase.from('pengguna').select('*')
     
     if (error) throw error
@@ -123,7 +122,6 @@ onMounted(fetchUsers)
     <h1>Count is: {{ count }}</h1>
     <button @click="increment">Increment</button>
   </div>
-</template>
 
 >>>>>>> parent of 6863edc (Feat : useManagement)
 <style scoped>
