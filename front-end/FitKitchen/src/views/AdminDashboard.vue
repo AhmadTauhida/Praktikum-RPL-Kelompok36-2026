@@ -332,7 +332,7 @@ const recentRecipes = computed(() => {
 
 /* Info Card */
 .info-card {
-  background: linear-gradient(90deg, #E8F5E9 0%, #FFF3E0 100%);
+  background: linear-gradient(145deg, #F0FDF4 0%, #FAFAFA 100%);
   border: 1px solid #DCFCE7;
   border-radius: 12px;
   padding: 1.5rem;
