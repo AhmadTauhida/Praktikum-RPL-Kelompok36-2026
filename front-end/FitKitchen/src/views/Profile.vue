@@ -151,7 +151,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient' 
 
 
 import profile from '../assets/icons/profile.png'
@@ -173,74 +172,8 @@ const userGoals = ref({ target_kalori: 0, target_protein: 0 })
 let authSubscription = null
 
 
-const fetchUserProfile = async (userId) => {
-  if (!userId) {
-    isLoading.value = false
-    return
-  }
-  
-  try {
-   
-    const { data, error } = await supabase
-      .from('pengguna')
-      .select('*')
-      .eq('id_pengguna', userId)
-      .single()
 
-    if (error) throw error
 
-    if (data) {
-      userData.value = {
-        id: data.id_pengguna,
-        username: data.username,
-        email: data.email,
-        weight: data.berat_badan,
-        height: data.tinggi_badan,
-        birthDate: data.tanggal_lahir,
-        gender: data.gender
-      }
-      userGoals.value = {
-        calories: data.target_kalori || 0,
-        protein: data.target_protein || 0
-      }
-    }
-  } catch (err) {
-    console.error("Gagal mengambil data profil:", err.message)
-    userData.value = null
-  } finally {
-    // Pastikan loading dimatikan di sini, apapun hasilnya
-    isLoading.value = false
-  }
-}
-
-onMounted(async () => {
-  // 1. Cek sesi saat ini
-  const { data: { session } } = await supabase.auth.getSession()
-  
-  if (session?.user) {
-    await fetchUserProfile(session.user.id)
-  } else {
-    // Jika tidak ada session, kita beri kesempatan listener auth
-    // Tapi jika tetap tidak ada, loading dimatikan setelah 2 detik
-    setTimeout(() => {
-      if (isLoading.value) isLoading.value = false
-    }, 2000)
-  }
-
-  // 2. Pasang Listener (Hanya satu kali)
-  const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user) {
-      
-      if (!userData.value) {
-        fetchUserProfile(session.user.id)
-      }
-    } else {
-      userData.value = null
-      isLoading.value = false
-    }
-  })
-  authSubscription = subscription
-})
 
 onUnmounted(() => {
   if (authSubscription) authSubscription.unsubscribe()
@@ -252,37 +185,6 @@ const formattedBirthDate = computed(() => {
   return `${month}/${day}/${year}`
 })
 
-const saveUserProfile = async () => {
-  if (!userData.value) return
-  try {
-    isSaving.value = true
-    
-    // Pastikan payload yang dikirim menggunakan nama kolom asli di DB (kiri)
-    // dan mengambil nilai dari properti yang benar di Vue (kanan)
-    const payload = {
-      username: userData.value.username,
-      berat_badan: userData.value.weight,    // Di fetch kamu pakai .weight
-      tinggi_badan: userData.value.height,   // Di fetch kamu pakai .height
-      tanggal_lahir: userData.value.birthDate, // Di fetch kamu pakai .birthDate
-      gender: userData.value.gender,
-      target_kalori: userGoals.value.calories, // Di fetch kamu pakai .calories
-      target_protein: userGoals.value.protein  // Di fetch kamu pakai .protein
-    }
-
-    const { error } = await supabase
-      .from('pengguna')
-      .update(payload)
-      .eq('id_pengguna', userData.value.id)
-
-    if (error) throw error
-    alert('Profil berhasil diperbarui!')
-  } catch (error) {
-    console.error('Error detail:', error)
-    alert('Gagal menyimpan profil: ' + error.message)
-  } finally {
-    isSaving.value = false
-  }
-}
 
 const toggleEdit = async () => {
   if (isEditing.value) {

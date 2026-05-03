@@ -107,7 +107,6 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
-import { supabase } from '../lib/supabaseClient';
 
 // Komponen & Asset
 import NavbarUser from '../components/NavbarUser.vue';
@@ -145,99 +144,6 @@ const planner = reactive({
 });
 
 // 1. Ambil Katalog Resep dari DB
-const fetchRecipes = async () => {
-  const { data, error } = await supabase.from('resep').select('*');
-  if (!error && data) {
-    recipes.value = data.map(r => ({
-      id_resep: r.id_resep,
-      title: r.nama_resep,
-      image: r.img_url,
-      calories: r.kalori,
-      protein: r.protein
-    }));
-  }
-};
-
-// 2. Ambil Jadwal Makan User dari DB
-const fetchMealPlan = async () => {
-  if (!userId.value) return;
-  
-  try {
-    // Relational Query: Ambil planner beserta detailnya dan info resep sekaligus
-    const { data: plans, error } = await supabase
-      .from('meal_planner')
-      .select(`
-        id_planner,
-        hari,
-        detail_planner (
-          id_detail,
-          waktu,
-          resep (
-            id_resep,
-            nama_resep,
-            img_url,
-            kalori,
-            protein
-          )
-        )
-      `)
-      .eq('id_pengguna', userId.value);
-
-    if (error) throw error;
-
-    // Mapping hasil DB ke UI Reactivity
-    if (plans) {
-      plans.forEach(plan => {
-        // Simpan id_planner untuk referensi saat Insert/Update nanti
-        plannerIds.value[plan.hari] = plan.id_planner;
-        
-        plan.detail_planner.forEach(detail => {
-          // Jika resep tidak null (belum dihapus dari tabel resep)
-          if (detail.resep) {
-            planner[plan.hari][detail.waktu] = {
-              id_detail: detail.id_detail,
-              id_resep: detail.resep.id_resep,
-              title: detail.resep.nama_resep,
-              image: detail.resep.img_url,
-              calories: detail.resep.kalori,
-              protein: detail.resep.protein
-            };
-          }
-        });
-      });
-    }
-  } catch (error) {
-    console.error("Gagal memuat jadwal:", error.message);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-// Autentikasi dan Inisialisasi
-onMounted(async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session?.user) {
-    userId.value = session.user.id;
-    await fetchRecipes();
-    await fetchMealPlan();
-  } else {
-    isLoading.value = false;
-  }
-
-  const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-    if (session?.user && userId.value !== session.user.id) {
-      userId.value = session.user.id;
-      isLoading.value = true;
-      await fetchRecipes();
-      await fetchMealPlan();
-    } else if (!session) {
-      userId.value = null;
-      isLoading.value = false;
-    }
-  });
-  authSubscription = subscription;
-});
 
 onUnmounted(() => {
   if (authSubscription) authSubscription.unsubscribe();
@@ -255,93 +161,8 @@ const closeModal = () => {
 };
 
 // 3. Simpan Resep ke Plan
-const selectRecipe = async (recipe) => {
-  const { day, time } = activeSlot.value;
-  if (!userId.value) return;
-
-  try {
-    isSaving.value = true;
-    let currentPlannerId = plannerIds.value[day];
-
-    // Cek apakah tabel meal_planner untuk hari ini sudah terbuat
-    if (!currentPlannerId) {
-      const { data, error } = await supabase
-        .from('meal_planner')
-        .insert({ id_pengguna: userId.value, hari: day })
-        .select('id_planner')
-        .single();
-      
-      if (error) throw error;
-      currentPlannerId = data.id_planner;
-      plannerIds.value[day] = currentPlannerId; // Simpan ke state
-    }
-
-    const existingMeal = planner[day][time];
-    let detailId = null;
-
-    // Jika slot tersebut sudah ada isinya, kita lakukan UPDATE
-    if (existingMeal && existingMeal.id_detail) {
-      const { error } = await supabase
-        .from('detail_planner')
-        .update({ id_resep: recipe.id_resep })
-        .eq('id_detail', existingMeal.id_detail);
-      
-      if (error) throw error;
-      detailId = existingMeal.id_detail;
-    } 
-    // Jika slot masih kosong, kita lakukan INSERT
-    else {
-      const { data, error } = await supabase
-        .from('detail_planner')
-        .insert({ id_planner: currentPlannerId, id_resep: recipe.id_resep, waktu: time })
-        .select('id_detail')
-        .single();
-      
-      if (error) throw error;
-      detailId = data.id_detail;
-    }
-
-    // Update state reaktif agar UI otomatis berubah
-    planner[day][time] = {
-      id_detail: detailId,
-      id_resep: recipe.id_resep,
-      title: recipe.title,
-      image: recipe.image,
-      calories: recipe.calories,
-      protein: recipe.protein
-    };
-
-    closeModal();
-  } catch (err) {
-    console.error("Gagal menyimpan resep:", err.message);
-    alert("Terjadi kesalahan saat mengatur meal plan.");
-  } finally {
-    isSaving.value = false;
-  }
-};
 
 // 4. Hapus Resep dari Plan
-const removeRecipe = async (day, time) => {
-  const meal = planner[day][time];
-  if (!meal || !meal.id_detail) return;
-
-  try {
-    isSaving.value = true;
-    const { error } = await supabase
-      .from('detail_planner')
-      .delete()
-      .eq('id_detail', meal.id_detail);
-
-    if (error) throw error;
-
-    // Bersihkan dari UI
-    planner[day][time] = null;
-  } catch (err) {
-    console.error("Gagal menghapus resep:", err.message);
-  } finally {
-    isSaving.value = false;
-  }
-};
 
 // Kalkulasi Nutrisi Harian
 const calculateDailyTotals = (day) => {

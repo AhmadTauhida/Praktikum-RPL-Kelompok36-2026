@@ -98,7 +98,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient' 
 import NavbarUser from '../components/NavbarUser.vue'
 
 // Icons
@@ -119,34 +118,6 @@ const selectedSort = ref('none')
 
 const recipes = ref([])
 const loading = ref(true)
-
-const fetchRecipes = async () => {
-  try {
-    loading.value = true
-    const { data, error } = await supabase
-      .from('resep')
-      .select('*')
-      .order('created_at', { ascending: false }) 
-
-    if (error) throw error
-
-    recipes.value = data.map(item => ({
-      id: item.id_resep,
-      title: item.nama_resep,
-      description: item.deskripsi,
-      image: item.img_url || 'https://via.placeholder.com/300x200?text=No+Image',
-      calories: item.kalori,
-      protein: item.protein,
-      // Mengambil data dari array kategori_diet PostgreSQL
-      diets: item.kategori_diet && item.kategori_diet.length > 0 ? item.kategori_diet : ['Balanced'] 
-    }))
-
-  } catch (error) {
-    console.error('Error fetching recipes:', error.message)
-  } finally {
-    loading.value = false
-  }
-}
 
 onMounted(() => {
   fetchRecipes()

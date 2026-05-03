@@ -17,13 +17,6 @@ function increment() {
   </div>
 </template>
 
-=======
-  <div class="container">
-    <h1>Count is: {{ count }}</h1>
-    <button @click="increment">Increment</button>
-  </div>
-
->>>>>>> parent of 6863edc (Feat : useManagement)
 <style scoped>
 .container {
   text-align: center;

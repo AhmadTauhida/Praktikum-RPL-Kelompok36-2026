@@ -90,7 +90,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue' 
 import { useRouter } from 'vue-router' 
-import { supabase } from '../lib/supabaseClient' 
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 
 // Import icon statis
@@ -101,30 +100,6 @@ const router = useRouter()
 const recipes = ref([]) 
 const searchQuery = ref('')
 const loading = ref(true) 
-
-const fetchRecipes = async () => {
-  try {
-    loading.value = true
-    const { data, error } = await supabase
-      .from('resep')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
-
-    // PERBAIKAN DI SINI
-    recipes.value = data.map(item => ({
-      ...item, // Menyalin otomatis semua kolom asli dari Supabase (id_resep, nama_resep, kalori, img_url, dll)
-      category: item.kategori_diet && item.kategori_diet.length > 0 
-                ? item.kategori_diet.join(', ') 
-                : 'Balanced'
-    }))
-  } catch (error) {
-    console.error('Error:', error.message)
-  } finally {
-    loading.value = false
-  }
-}
 
 // Menangani jika gambar gagal dimuat/kosong
 const handleImageError = (e) => {
@@ -150,26 +125,7 @@ const editRecipe = (id) => {
 }
 
 // 2. FITUR DELETE: Pop-up konfirmasi dan hapus dari Supabase
-const deleteRecipe = async (id) => {
-  const yakin = confirm('Apakah anda ingin menghapus resep ini?')
-  
-  if (yakin) {
-    try {
-      const { error } = await supabase
-        .from('resep')
-        .delete()
-        .eq('id_resep', id) 
 
-      if (error) throw error
-
-      alert('Resep berhasil dihapus!')
-      fetchRecipes() // Refresh daftar resep 
-      
-    } catch (err) {
-      alert('Gagal menghapus resep: ' + err.message)
-    }
-  }
-}
 </script>
 
 <style scoped>

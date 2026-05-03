@@ -84,7 +84,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient' // Import Supabase Client
 import NavbarUser from '../components/NavbarUser.vue'
 
 // Import asset lokal untuk Icon yang tadinya numpang di objek recipe
@@ -99,49 +98,7 @@ const recipe = ref(null)
 const loading = ref(true)
 
 // Mengambil 1 resep berdasarkan ID dari URL parameter
-const fetchRecipeDetails = async () => {
-  try {
-    loading.value = true
-    const currentId = route.params.id
 
-    const { data, error } = await supabase
-      .from('resep')
-      .select('*')
-      .eq('id_resep', currentId)
-      .single()
-
-    if (error) throw error
-
-    if (data) {
-      // Memetakan (Mapping) data database ke format yang digunakan template HTML
-      recipe.value = {
-        id: data.id_resep,
-        title: data.nama_resep,
-        description: data.deskripsi,
-        image: data.img_url || 'https://via.placeholder.com/900x400?text=No+Image',
-        calories: data.kalori,
-        protein: data.protein,
-        prepTime: data.prep_time,
-        ingredients: Array.isArray(data.bahan) ? data.bahan : [],
-        steps: Array.isArray(data.langkah) ? data.langkah : [],
-        diet: data.diet ? data.diet.toLowerCase() : 'balanced' // Fallback
-      }
-    }
-  } catch (error) {
-    console.error('Error fetching recipe details:', error.message)
-    recipe.value = null // Biarkan null agar block "Recipe not found!" muncul
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(() => {
-  fetchRecipeDetails()
-})
-
-const goBack = () => {
-  router.back()
-}
 </script>
 
 <style scoped>

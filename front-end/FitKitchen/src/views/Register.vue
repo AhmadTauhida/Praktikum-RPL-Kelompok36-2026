@@ -158,7 +158,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient' // Pastikan import supabase
 
 import logo from '../assets/icons/logo.png'
 import mail from '../assets/icons/mail.svg'
@@ -227,56 +226,6 @@ const isFormValid = computed(() => {
   )
 })
 
-const handleRegister = async () => {
-  validateEmail() 
-  if (!isFormValid.value) return
-
-  try {
-    loading.value = true
-    registerError.value = ''
-
-    // 1. Mendaftarkan User ke Supabase Authentication
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: form.value.email,
-      password: form.value.password,
-    })
-
-    if (authError) throw authError
-
-    const userId = authData.user?.id
-    if (!userId) throw new Error('Gagal mendapatkan ID pengguna.')
-
-    // 2. Menyimpan Profil User ke Tabel 'pengguna'
-    const payload = {
-      id_pengguna: userId, // Diambil dari Supabase Auth
-      username: form.value.username,
-      email: form.value.email,
-      password: form.value.password, // Ingat, ini anti-pattern tapi diwajibkan oleh skemamu saat ini
-      berat_badan: parseFloat(form.value.weight),
-      tinggi_badan: parseFloat(form.value.height),
-      tanggal_lahir: form.value.birthDate,
-      gender: form.value.gender,
-      role: 'user', // Set default role sebagai pengguna biasa
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    const { error: dbError } = await supabase
-      .from('pengguna')
-      .insert([payload])
-
-    if (dbError) throw dbError
-
-    alert('Registrasi Berhasil! Silakan masuk menggunakan akun baru kamu.')
-    router.push('/login')
-
-  } catch (error) {
-    console.error('Registration Error:', error.message)
-    registerError.value = error.message
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <style scoped>

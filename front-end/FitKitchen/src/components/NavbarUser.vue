@@ -34,7 +34,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient'
 
 // Import Icons
 import homeIcon from '../assets/icons/home.png'
@@ -52,32 +51,6 @@ const userProfile = ref({
 })
 
 // Fungsi untuk mengambil data user dari Supabase
-const fetchUserProfile = async () => {
-  try {
-    // 1. Dapatkan user yang sedang login dari Auth
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user) {
-      // 2. Cari detailnya di tabel 'pengguna'
-      const { data, error } = await supabase
-        .from('pengguna')
-        .select('username, role')
-        .eq('id_pengguna', user.id)
-        .single()
-
-      if (error) throw error
-      
-      if (data) {
-        userProfile.value = data
-      }
-    } else {
-      // Jika tidak ada user (sesi habis), tendang ke login
-      router.push('/login')
-    }
-  } catch (error) {
-    console.error('Error fetching user profile:', error.message)
-  }
-}
 
 // Jalankan fetch saat navbar dimuat
 onMounted(() => {
@@ -85,24 +58,7 @@ onMounted(() => {
 })
 
 // Fungsi logout asli menggunakan Supabase
-const handleLogout = async () => {
-  const yakin = confirm('Apakah anda yakin ingin logout?')
-  if (yakin) {
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
 
-      // Bersihkan localStorage yang kita buat manual di Login.vue
-      localStorage.removeItem('isAuthenticated')
-      localStorage.removeItem('userRole')
-
-      // Arahkan kembali ke halaman login
-      router.push('/login')
-    } catch (error) {
-      alert('Error logging out: ' + error.message)
-    }
-  }
-}
 </script>
 
 <style scoped>

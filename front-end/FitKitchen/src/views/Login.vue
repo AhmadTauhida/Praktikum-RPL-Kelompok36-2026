@@ -69,7 +69,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabaseClient' // Pastikan path import ini benar
 
 // Import Icons
 import logo from '../assets/icons/logo.png'
@@ -102,66 +101,6 @@ const validateEmail = () => {
 const isFormValid = computed(() => {
   return email.value && password.value && !emailError.value
 })
-
-const handleLogin = async () => {
-  validateEmail() 
-  if (!isFormValid.value) return
-
-  try {
-    loading.value = true
-    loginError.value = ''
-
-    // 1. Login via Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value,
-    })
-
-    if (authError) throw authError
-
-    const userId = authData.user.id
-
-    // 2. Cek apakah ini Admin
-    const { data: adminData } = await supabase
-      .from('admin')
-      .select('role')
-      .eq('id_admin', userId)
-      .maybeSingle()
-
-    if (adminData) {
-      localStorage.setItem('userRole', adminData.role || 'admin')
-      router.push('/admin')
-      return // Selesai
-    }
-
-    // 3. JIKA BUKAN ADMIN: Cek apakah data ada di tabel 'pengguna'
-    const { data: userData, error: userTableError } = await supabase
-      .from('pengguna')
-      .select('username')
-      .eq('id_pengguna', userId)
-      .maybeSingle()
-
-    if (userTableError) throw userTableError
-
-    if (!userData) {
-      // Kasus: Akun ada di Auth, tapi baris data di tabel 'pengguna' hilang
-      // Ini yang bikin Profile.vue kamu null/kosong
-      throw new Error('Data profil pengguna tidak ditemukan di database.')
-    }
-
-    // 4. Jika semua oke, baru arahkan ke home
-    localStorage.setItem('userRole', 'user')
-    router.push('/')
-
-  } catch (error) {
-    console.error('Login Error:', error.message)
-    loginError.value = error.message 
-    // Jika gagal, sebaiknya paksa logout dari auth agar sesi tidak menggantung
-    await supabase.auth.signOut()
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <style scoped>

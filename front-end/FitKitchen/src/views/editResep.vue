@@ -138,39 +138,6 @@ const form = reactive({
   langkah: ['']
 })
 
-const fetchRecipeData = async () => {
-  try {
-    fetching.value = true
-    const { data, error } = await supabase
-      .from('resep')
-      .select('*')
-      .eq('id_resep', recipeId)
-      .single()
-
-    if (error) throw error
-
-    if (data) {
-      form.nama_resep = data.nama_resep
-      form.deskripsi = data.deskripsi
-      form.img_url = data.img_url || ''
-      form.kalori = data.kalori
-      form.protein = data.protein
-      form.prep_time = data.prep_time
-      
-      // Load kategori_diet dari database ke state form
-      form.kategori_diet = Array.isArray(data.kategori_diet) ? data.kategori_diet : []
-      
-      form.bahan = Array.isArray(data.bahan) && data.bahan.length > 0 ? data.bahan : ['']
-      form.langkah = Array.isArray(data.langkah) && data.langkah.length > 0 ? data.langkah : ['']
-    }
-  } catch (error) {
-    console.error('Error fetching recipe:', error.message)
-    alert('Gagal mengambil data resep.')
-  } finally {
-    fetching.value = false
-  }
-}
-
 onMounted(() => {
   if (recipeId) {
     fetchRecipeData()
@@ -188,49 +155,6 @@ const removeIngredient = (idx) => {
 const addStep = () => form.langkah.push('')
 const removeStep = (idx) => {
   if (form.langkah.length > 1) form.langkah.splice(idx, 1)
-}
-
-const handleSubmit = async () => {
-  // Validasi kategori diet
-  if (form.kategori_diet.length === 0) {
-    alert("Please select at least one diet category!")
-    return
-  }
-
-  try {
-    loading.value = true
-
-    const cleanBahan = form.bahan.filter(item => item.trim() !== '')
-    const cleanLangkah = form.langkah.filter(item => item.trim() !== '')
-
-    const payload = {
-      nama_resep: form.nama_resep,
-      deskripsi: form.deskripsi,
-      img_url: form.img_url,
-      kalori: form.kalori,
-      protein: form.protein,
-      prep_time: form.prep_time,
-      kategori_diet: form.kategori_diet, // Sertakan array kategori saat update
-      bahan: cleanBahan,
-      langkah: cleanLangkah,
-      updated_at: new Date().toISOString() 
-    }
-
-    const { error } = await supabase
-      .from('resep')
-      .update(payload)
-      .eq('id_resep', recipeId)
-
-    if (error) throw error
-
-    alert('Recipe updated successfully!')
-    router.push('/RecipeManagement') 
-  } catch (error) {
-    console.error('Error updating recipe:', error.message)
-    alert('Gagal memperbarui resep.')
-  } finally {
-    loading.value = false
-  }
 }
 </script>
 
