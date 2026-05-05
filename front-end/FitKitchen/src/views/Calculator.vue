@@ -9,18 +9,20 @@
       </div>
 
       <div class="grid-layout">
+        <!-- FORM KIRI -->
         <div class="card left-card">
           <h2>Your Information</h2>
 
+          <!-- Biological Sex -->
           <div class="input-group">
-            <label><img :src="profile" alt="Profile" class="icon" /> Biological Sex</label>
+            <label><img :src="iconProfile" alt="Profile" class="icon" /> Biological Sex</label>
             <div class="row-options">
               <div 
                 class="option-box flex-center" 
                 :class="{ active: form.sex === 'male' }"
                 @click="form.sex = 'male'"
               >
-                <img :src="male" alt="Male" class="icon-large" />
+                <img :src="iconMale" alt="Male" class="icon-large" />
                 <span>Male</span>
               </div>
               <div 
@@ -28,32 +30,34 @@
                 :class="{ active: form.sex === 'female' }"
                 @click="form.sex = 'female'"
               >
-                <img :src="female" alt="Female" class="icon-large" />
+                <img :src="iconFemale" alt="Female" class="icon-large" />
                 <span>Female</span>
               </div>
             </div>
           </div>
 
+          <!-- Age & Body Metrics -->
           <div class="input-group">
-            <label><img :src="calendar" alt="Age" class="icon" /> Age</label>
+            <label><img :src="iconCalendar" alt="Age" class="icon" /> Age</label>
             <input type="number" v-model="form.age" placeholder="Enter your age" />
           </div>
 
           <div class="input-group">
-            <label><img :src="height" alt="Height" class="icon" /> Height (cm)</label>
+            <label><img :src="iconHeight" alt="Height" class="icon" /> Height (cm)</label>
             <input type="number" v-model="form.height" placeholder="e.g., 175" />
           </div>
 
           <div class="input-group">
-             <label><img :src="weight" alt="Current Weight" class="icon" /> Current Weight (kg)</label>
+             <label><img :src="iconWeight" alt="Current Weight" class="icon" /> Current Weight (kg)</label>
             <input type="number" v-model="form.currentWeight" placeholder="e.g., 70" />
           </div>
 
           <div class="input-group">
-            <label><img :src="target" alt="Target Weight" class="icon" /> Target Weight (kg)</label>
+            <label><img :src="iconTarget" alt="Target Weight" class="icon" /> Target Weight (kg)</label>
             <input type="number" v-model="form.targetWeight" placeholder="e.g., 65" />
           </div>
 
+          <!-- Main Goal -->
           <div class="input-group">
             <label>Main Goal</label>
             <div class="row-options">
@@ -62,7 +66,7 @@
                 :class="{ active: form.goal === 'lose' }"
                 @click="form.goal = 'lose'"
               >
-                <img :src="lose" alt="Lose" class="icon-medium" />
+                <img :src="iconLose" alt="Lose" class="icon-medium" />
                 <span>Lose</span>
               </div>
               <div 
@@ -70,7 +74,7 @@
                 :class="{ active: form.goal === 'maintain' }"
                 @click="form.goal = 'maintain'"
               >
-                <img :src="maintain" alt="Maintain" class="icon-medium" />
+                <img :src="iconMaintain" alt="Maintain" class="icon-medium" />
                 <span>Maintain</span>
               </div>
               <div 
@@ -78,14 +82,15 @@
                 :class="{ active: form.goal === 'gain' }"
                 @click="form.goal = 'gain'"
               >
-                <img :src="gain" alt="Gain" class="icon-medium" />
+                <img :src="iconGain" alt="Gain" class="icon-medium" />
                 <span>Gain</span>
               </div>
             </div>
           </div>
 
+          <!-- Activity Level (Kembali Hadir) -->
           <div class="input-group">
-            <label><img :src="activity" alt="Activity" class="icon" /> Activity Level</label>
+            <label><img :src="iconActivity" alt="Activity" class="icon" /> Activity Level</label>
             <div class="col-options">
               <div 
                 v-for="level in activityLevels" 
@@ -100,13 +105,16 @@
             </div>
           </div>
 
-          <button class="btn-primary" @click="calculateMacros">Calculate My Macros</button>
+          <button class="btn-primary" @click="calculateMacros" :disabled="isLoading">
+            {{ isLoading ? 'Loading...' : 'Calculate My Macros' }}
+          </button>
         </div>
 
+        <!-- HASIL KANAN -->
         <div class="card right-card">
           <div v-if="!isCalculated" class="empty-state">
             <div class="icon-circle gray">
-              <img :src="calories" alt="Calories" class="icon-xl" />
+              <img :src="iconCalories" alt="Calories" class="icon-xl" />
             </div>
             <h3>Your Results Will Appear Here</h3>
             <p>Fill in all the fields on the left and click "Calculate My Macros" to see your personalized nutrition targets</p>
@@ -114,7 +122,7 @@
 
           <div v-else class="result-state">
             <div class="icon-circle green">
-              <img :src="resultsIcon" alt="Results" class="icon-xl" />
+              <img :src="iconResults" alt="Results" class="icon-xl" />
             </div>
             <h3>Your Personalized Macros</h3>
             <p class="subtitle">Based on your {{ form.goal }} goal</p>
@@ -132,11 +140,9 @@
             </div>
 
             <div class="tips-box">
-              <h4><img :src="tips" alt="Tips" class="icon" /> Tips for Success</h4>
+              <h4><img :src="iconTips" alt="Tips" class="icon" /> Tips for Success</h4>
               <ul>
-                <li v-for="(tip, index) in results.tips" :key="index">
-                  {{ tip }}
-                </li>
+                <li v-for="(tip, index) in results.tips" :key="index">{{ tip }}</li>
               </ul>
             </div>
 
@@ -149,24 +155,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import NavbarUser from '../components/NavbarUser.vue'
-import profile from '../assets/icons/profile.svg'
-import calendar from '../assets/icons/calendar.svg'
-import resultsIcon from '../assets/icons/results.svg'
-import calories from '../assets/icons/calori.svg'
-import weight from '../assets/icons/weight.svg'
-import height from '../assets/icons/height.svg'
-import target from '../assets/icons/target.svg'
-import activity from '../assets/icons/activity.svg'
-import lose from '../assets/icons/lose.svg'
-import maintain from '../assets/icons/maintain.svg'
-import gain from '../assets/icons/gain.svg'
-import male from '../assets/icons/male.svg'
-import female from '../assets/icons/female.svg'
-import tips from '../assets/icons/tips.svg'
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
+import NavbarUser from '../components/NavbarUser.vue';
+
+// Alias Icon Imports untuk menghindari konflik penamaan
+import iconProfile from '../assets/icons/profile.svg';
+import iconCalendar from '../assets/icons/calendar.svg';
+import iconResults from '../assets/icons/results.svg';
+import iconCalories from '../assets/icons/calori.svg';
+import iconWeight from '../assets/icons/weight.svg';
+import iconHeight from '../assets/icons/height.svg';
+import iconTarget from '../assets/icons/target.svg';
+import iconActivity from '../assets/icons/activity.svg';
+import iconLose from '../assets/icons/lose.svg';
+import iconMaintain from '../assets/icons/maintain.svg';
+import iconGain from '../assets/icons/gain.svg';
+import iconMale from '../assets/icons/male.svg';
+import iconFemale from '../assets/icons/female.svg';
+import iconTips from '../assets/icons/tips.svg';
 
 const isCalculated = ref(false);
+const isLoading = ref(false);
 
 const form = ref({
   sex: '',
@@ -194,76 +204,95 @@ const activityLevels = [
   { title: 'Extra Active', desc: 'Very intense exercise daily or physical job', value: 1.9 }
 ];
 
-const generateTipsByBMI = (bmi) => {
-  if (bmi < 18.5) {
-    return [
-      "Fokus pada surplus kalori dengan makanan padat nutrisi seperti alpukat, kacang-kacangan, dan minyak zaitun.",
-      "Lakukan latihan beban (strength training) untuk memastikan penambahan berat badan berupa massa otot, bukan hanya lemak.",
-      "Makan lebih sering dengan porsi sedang (5-6 kali sehari) jika kesulitan makan porsi besar.",
-      "Pastikan asupan protein tercukupi untuk membangun otot baru."
-    ];
-  } else if (bmi >= 18.5 && bmi < 25) {
-    return [
-      "Pertahankan keseimbangan kalori Anda saat ini jika ingin memelihara berat badan.",
-      "Fokus pada konsumsi variasi *whole foods* (makanan utuh) untuk mikronutrisi yang optimal.",
-      "Lakukan kombinasi latihan kardiovaskular dan angkat beban untuk kesehatan jangka panjang.",
-      "Jaga hidrasi dan kualitas tidur (7-8 jam per malam) untuk pemulihan."
-    ];
-  } else if (bmi >= 25 && bmi < 30) {
-    return [
-      "Terapkan defisit kalori moderat (300-500 kcal dari TDEE) secara konsisten.",
-      "Tingkatkan asupan protein dan serat untuk membantu Anda merasa kenyang lebih lama.",
-      "Tingkatkan aktivitas fisik harian (NEAT) seperti lebih banyak berjalan kaki atau naik tangga.",
-      "Batasi konsumsi kalori cair (minuman manis, alkohol) karena kurang mengenyangkan."
-    ];
-  } else {
-    return [
-      "Konsultasikan rencana diet dengan ahli gizi profesional untuk metode yang paling aman.",
-      "Fokus pada olahraga *low-impact* seperti berenang, bersepeda, atau jalan cepat untuk melindungi sendi.",
-      "Fokus pada satu kebiasaan kecil dalam satu waktu, misalnya mengganti minuman manis dengan air putih.",
-      "Terapkan defisit kalori secara perlahan agar tubuh tidak terkejut."
-    ];
+// --- FUNGSI IMPORT DATA BIOLOGIS ---
+const fetchUserData = async () => {
+  isLoading.value = true;
+  try {
+    const response = await axios.get('http://localhost:3000/api/pengguna/profile');
+    if (response.data.success) {
+      const user = response.data.data;
+      form.value.sex = user.gender || '';
+      form.value.height = user.tinggi_badan || '';
+      form.value.currentWeight = user.berat_badan || '';
+      
+      if (user.tanggal_lahir) {
+        const birthDate = new Date(user.tanggal_lahir);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        form.value.age = age;
+      }
+    }
+  } catch (error) {
+    console.error("Gagal memuat data profil:", error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const calculateMacros = () => {
+const generateTipsByBMI = (bmi) => {
+  if (bmi < 18.5) return ["Fokus pada surplus kalori nutrisi padat.", "Lakukan strength training.", "Makan porsi kecil namun sering."];
+  if (bmi < 25) return ["Pertahankan keseimbangan kalori.", "Fokus pada variasi makanan utuh.", "Jaga hidrasi dan kualitas tidur."];
+  if (bmi < 30) return ["Terapkan defisit kalori moderat (300-500 kcal).", "Tingkatkan asupan protein dan serat.", "Tingkatkan NEAT harian."];
+  return ["Konsultasikan dengan ahli gizi.", "Olahraga low-impact.", "Ganti minuman manis dengan air putih."];
+};
+
+// --- FUNGSI PERHITUNGAN & EKSPORT DATA ---
+const calculateMacros = async () => {
   if (!form.value.sex || !form.value.age || !form.value.height || !form.value.currentWeight || !form.value.activity || !form.value.goal) {
     alert("Mohon isi semua data terlebih dahulu.");
     return;
   }
 
+  // 1. Hitung BMR (Mifflin-St Jeor Equation)
   let bmr = (10 * form.value.currentWeight) + (6.25 * form.value.height) - (5 * form.value.age);
   bmr = form.value.sex === 'male' ? bmr + 5 : bmr - 161;
 
+  // 2. Hitung TDEE
   let tdee = bmr * parseFloat(form.value.activity);
 
-  if (form.value.goal === 'lose') {
-    tdee -= 500;
-  } else if (form.value.goal === 'gain') {
-    tdee += 500;
-  }
+  // 3. Adjustment Berdasarkan Goal
+  if (form.value.goal === 'lose') tdee -= 500;
+  else if (form.value.goal === 'gain') tdee += 500;
 
-  let protein = Math.round(form.value.currentWeight * 2.2);
-  let proteinCalories = protein * 4;
-  let proteinPercentage = Math.round((proteinCalories / tdee) * 100);
-
-  const heightInMeters = form.value.height / 100;
-  const calculatedBmi = form.value.currentWeight / (heightInMeters * heightInMeters);
-
-  results.value.calories = Math.round(tdee);
-  results.value.protein = protein;
-  results.value.proteinPercent = proteinPercentage;
-  results.value.bmi = calculatedBmi.toFixed(1); 
+  const finalCalories = Math.round(tdee);
+  const finalProtein = Math.round(form.value.currentWeight * 2); // 2g per kg berat badan
   
-  results.value.tips = generateTipsByBMI(calculatedBmi);
+  // 4. Update UI Results
+  results.value.calories = finalCalories;
+  results.value.protein = finalProtein;
+  results.value.proteinPercent = Math.round(((finalProtein * 4) / finalCalories) * 100);
+  
+  const heightInMeters = form.value.height / 100;
+  const bmi = form.value.currentWeight / (heightInMeters * heightInMeters);
+  results.value.tips = generateTipsByBMI(bmi);
 
-  isCalculated.value = true;
+  // 5. SIMPAN KE DATABASE (EKSPORT)
+  try {
+    isLoading.value = true;
+    await axios.put('http://localhost:3000/api/pengguna/profile', {
+      target_kalori: finalCalories,
+      target_protein: finalProtein
+    });
+    isCalculated.value = true;
+  } catch (error) {
+    alert("Kalkulasi berhasil, tapi gagal menyimpan ke database.");
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 const resetCalculator = () => {
   isCalculated.value = false;
 };
+
+onMounted(fetchUserData);
 </script>
+
+
 
 <style scoped>
 .bg-gray-50 {

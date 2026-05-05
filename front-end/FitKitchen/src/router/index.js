@@ -22,8 +22,10 @@ const routes = [
     component: Login,
     meta: { requiresGuest: true } 
   },
-  { path: '/register', name: 'Register', component: Register },
-  
+  { path: '/register', name: 'Register', component: Register,
+    meta: { requiresGuest: true, locked: true }
+  },
+
   // Rute untuk User yang Login (State-Locked)
   { 
     path: '/meal-planner', 
@@ -81,34 +83,34 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from) => {
-  // 1. Ambil data dari localStorage
   const token = localStorage.getItem('token')
-  const userRole = localStorage.getItem('userRole') 
+  const userRole = localStorage.getItem('userRole')
+  
+  // 1. CEK AKSES URL MANUAL (State-Locked)
+  // Menggunakan gaya modern: cukup return object rute tujuan
+  const isManualAccess = !from.name;
 
-  // 2. STATE-LOCKED NAVIGATION CHECK
-  const isDirectUrlAccess = !from.name;
-
-  if (to.meta.locked && isDirectUrlAccess) {
-    return { name: 'Landing' } 
+  if (to.meta.locked && isManualAccess) {
+    return { name: 'Landing' };
   }
 
-  // 3. LOGIKA PROTEKSI ADMIN
-  if (to.meta.requiresAdmin && userRole !== 'admin') {
-    return { name: 'Landing' }
-  }
-
-  // 4. LOGIKA PROTEKSI USER UMUM
+  // 2. PROTEKSI AUTHENTICATION
   if (to.meta.requiresAuth && !token) {
-    return { name: 'Login' } 
+    return { name: 'Login' };
   }
 
-  // 5. LOGIKA GUEST 
+  // 3. PROTEKSI ROLE (Admin Only)
+  if (to.meta.requiresAdmin && userRole !== 'admin') {
+    return { name: 'Landing' };
+  }
+
+  // 4. PROTEKSI GUEST (Mencegah user login akses Login/Register)
   if (to.meta.requiresGuest && token) {
-    return { name: 'Landing' } 
+    return { name: 'Landing' };
   }
 
-  // WAJIB: Izinkan navigasi jika tidak ada kondisi yang terpenuhi di atas
-  return true 
-})
+  // Jika tidak masuk ke kondisi di atas, navigasi diizinkan secara otomatis
+  // Tidak perlu memanggil next() lagi di Vue Router 4 jika sudah menggunakan return
+});
 
 export default router

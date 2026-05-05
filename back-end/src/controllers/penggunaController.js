@@ -118,7 +118,7 @@ if (plannerError) {
           role: pengguna.role // Informasi role masuk ke token
         }, 
         JWT_SECRET, 
-        { expiresIn: "24h" }
+        { expiresIn: "12h" }
       );
 
       // 4. PENYEMPURNAAN: Kirim 'role' ke Frontend untuk disimpan di localStorage
@@ -136,6 +136,47 @@ if (plannerError) {
 
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  async getProfile(req, res) {
+    try {
+      // req.user.id didapatkan dari token JWT yang sudah di-decode oleh middleware
+      const userId = req.user.id; 
+      const pengguna = await PenggunaModel.getById(userId);
+      
+      if (!pengguna) {
+        return res.status(404).json({ success: false, error: "Data pengguna tidak ditemukan." });
+      }
+
+      // Jangan kirim password ke frontend!
+      delete pengguna.password;
+      
+      res.status(200).json({ success: true, data: pengguna });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // Mengupdate data profil
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user.id;
+      const payloadUpdate = req.body; // Data baru dari form Edit Profile di Vue
+
+      // Pastikan user tidak bisa mengubah password atau role melalui endpoint ini sembarangan
+      delete payloadUpdate.password;
+      delete payloadUpdate.role;
+      delete payloadUpdate.id_pengguna; 
+
+      payloadUpdate.updated_at = new Date().toISOString();
+
+      const updatedUser = await PenggunaModel.update(userId, payloadUpdate);
+      delete updatedUser.password;
+
+      res.status(200).json({ success: true, data: updatedUser, message: "Profil berhasil diperbarui." });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
     }
   },
 

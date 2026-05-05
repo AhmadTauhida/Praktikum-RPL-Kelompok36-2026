@@ -1,201 +1,179 @@
 <template>
+  <NavbarUser />
   <div class="page-wrapper">
-    <NavbarUser />
-
-    <main class="profile-container">
+    <div class="profile-container" v-if="profile">
+      <!-- Header -->
       <div class="profile-header">
         <h1>Profile</h1>
         <p>Manage your personal information and goals</p>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="isLoading" class="card main-card text-center">
-        <p>Memuat data profil...</p>
-      </div>
+      <!-- Informasi Pribadi -->
+      <div class="card">
+        <div class="card-actions">
+          <button @click="goToCalculator" class="btn btn-orange">
+            <img :src="iconCalculator" class="btn-icon" /> Calculator
+          </button>
+          <button @click="toggleEdit" class="btn btn-green">
+            <img :src="iconEdit" class="btn-icon" /> 
+            {{ isEditing ? 'Save Profile' : 'Edit Profile' }}
+          </button>
+        </div>
 
-      <!-- Tampilan Jika User Null (Tidak ada sesi login) -->
-      <div v-else-if="!userData" class="card main-card text-center">
-        <h2>Tidak Ada Pengguna Aktif</h2>
-        <p>Silakan login terlebih dahulu untuk melihat dan mengelola profil Anda.</p>
-        <!-- Kamu bisa tambahkan tombol router.push('/login') di sini -->
-      </div>
-
-      <!-- Tampilan Profile (Jika data user tersedia) -->
-      <div v-else>
-        <div class="card main-card">
-          <div class="card-actions">
-            <button class="btn btn-orange" @click="goToCalculator">
-              <img :src="calculator" alt="Calculator Icon" class="btn-icon" />
-              Calculator
-            </button>
-            
-            <button class="btn btn-green" @click="toggleEdit" :disabled="isSaving">
-              <img :src="editProfile" alt="Edit Icon" class="btn-icon" />
-              {{ isSaving ? 'Saving...' : (isEditing ? 'Save Profile' : 'Edit Profile') }}
-            </button>
+        <div class="info-list">
+          <!-- Username -->
+          <div class="info-item">
+            <div class="icon-box green-bg"><img :src="iconProfile" /></div>
+            <div class="info-text">
+              <span class="label">Username</span>
+              <input v-if="isEditing" v-model="profile.username" class="edit-input" />
+              <span v-else class="value">{{ profile.username }}</span>
+            </div>
           </div>
 
-          <div class="info-list">
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="profile" alt="User" />
-              </div>
-              <div class="info-text">
-                <span class="label">Username</span>
-                <input v-if="isEditing" type="text" v-model="userData.username" class="edit-input" />
-                <span v-else class="value">{{ userData.username }}</span>
-              </div>
+          <!-- Email -->
+          <div class="info-item">
+            <div class="icon-box green-bg"><img :src="iconMail" /></div>
+            <div class="info-text">
+              <span class="label">Email</span>
+              <span class="value">{{ profile.email }}</span>
             </div>
+          </div>
 
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="mail" alt="Mail" />
+          <!-- Weight -->
+          <div class="info-item">
+            <div class="icon-box green-bg"><img :src="iconWeight" /></div>
+            <div class="info-text">
+              <span class="label">Weight (kg)</span>
+              <div v-if="isEditing" class="edit-group">
+                <input type="number" v-model="profile.berat_badan" class="edit-input goal-input" />
+                <span class="unit">kg</span>
               </div>
-              <div class="info-text">
-                <span class="label">Email</span>
-                <input v-if="isEditing" type="email" v-model="userData.email" class="edit-input" disabled title="Email biasanya tidak bisa diubah langsung" />
-                <span v-else class="value">{{ userData.email }}</span>
-              </div>
+              <span v-else class="value">{{ profile.berat_badan || '-' }} kg</span>
             </div>
+          </div>
 
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="weight" alt="Weight" />
+          <!-- Height -->
+          <div class="info-item">
+            <div class="icon-box green-bg"><img :src="iconHeight" /></div>
+            <div class="info-text">
+              <span class="label">Height (cm)</span>
+              <div v-if="isEditing" class="edit-group">
+                <input type="number" v-model="profile.tinggi_badan" class="edit-input goal-input" />
+                <span class="unit">cm</span>
               </div>
-              <div class="info-text">
-                <span class="label">Weight (kg)</span>
-                <input v-if="isEditing" type="number" v-model="userData.weight" class="edit-input" />
-                <span v-else class="value">{{ userData.weight }} kg</span>
-              </div>
+              <span v-else class="value">{{ profile.tinggi_badan || '-' }} cm</span>
             </div>
+          </div>
 
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="height" alt="Height" />
-              </div>
-              <div class="info-text">
-                <span class="label">Height (cm)</span>
-                <input v-if="isEditing" type="number" v-model="userData.height" class="edit-input" />
-                <span v-else class="value">{{ userData.height }} cm</span>
-              </div>
-            </div>
-
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="date" alt="Date" />
-              </div>
-              <div class="info-text">
-                <span class="label">Birth Date</span>
-                <input v-if="isEditing" type="date" v-model="userData.birthDate" class="edit-input" />
-                <span v-else class="value">{{ formattedBirthDate }}</span>
-              </div>
-            </div>
-
-            <div class="info-item">
-              <div class="icon-box green-bg">
-                <img :src="profile" alt="Gender" />
-              </div>
-              <div class="info-text">
-                <span class="label">Gender</span>
-                <select v-if="isEditing" v-model="userData.gender" class="edit-input" disabled title="Gender harus sama dengan saat pendaftaran">
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                </select>
-                <span v-else class="value">{{ userData.gender || '-' }}</span>
-              </div>
+          <!-- Birth Date -->
+          <div class="info-item">
+            <div class="icon-box green-bg"><img :src="iconDate" /></div>
+            <div class="info-text">
+              <span class="label">Birth Date</span>
+              <input v-if="isEditing" type="date" v-model="profile.tanggal_lahir" class="edit-input" />
+              <span v-else class="value">{{ formattedBirthDate }}</span>
             </div>
           </div>
         </div>
+        <!-- Informasi Gender -->
+       <div class="info-item" style="margin-top: 1.5rem;">
+          <div class="icon-box green-bg"><img :src="iconProfile" /></div>
+          <div class="info-text">
+            <span class="label">Gender</span>
+            <span class="value">{{ profile.gender || '-' }}</span>
+          </div>
+        </div>
 
-        <div class="card goals-card">
-          <h2>Nutrition Goals</h2>
-          <div class="goals-grid">
-            <div class="goal-item">
-              <div class="icon-box orange-bg">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-              </div>
-              <div class="info-text">
-                <span class="label">Target Calories</span>
-                <div v-if="isEditing" class="edit-group">
-                  <input type="number" v-model="userGoals.calories" class="edit-input goal-input" />
-                  <span class="unit">cal/day</span>
-                </div>
-                <span v-else class="value">{{ userGoals.calories }} cal/day</span>
-              </div>
+      </div>
+
+      <!-- Nutrition Goals -->
+      <div class="card goals-card">
+        <h2>Nutrition Goals</h2>
+        <div class="goals-grid">
+          <div class="goal-item">
+            <div class="icon-box orange-bg"><img :src="caloriesIcon" /></div>
+            <div class="info-text">
+              <span class="label">Target Calories</span>
+              <span class="value">{{ profile.target_kalori || 'Belum diatur' }} cal/day</span>
             </div>
-
-            <div class="goal-item">
-              <div class="icon-box green-bg">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-              </div>
-              <div class="info-text">
-                <span class="label">Target Protein</span>
-                <div v-if="isEditing" class="edit-group">
-                  <input type="number" v-model="userGoals.protein" class="edit-input goal-input" />
-                  <span class="unit">g/day</span>
-                </div>
-                <span v-else class="value">{{ userGoals.protein }} g/day</span>
-              </div>
+          </div>
+          <div class="goal-item">
+            <div class="icon-box green-bg"><img :src="proteinIcon" /></div>
+            <div class="info-text">
+              <span class="label">Target Protein</span>
+              <span class="value">{{ profile.target_protein || 'Belum diatur' }} g/day</span>
             </div>
           </div>
         </div>
       </div>
-    </main>
+     
+    </div>
+
+    <div v-else class="text-center" style="margin-top: 5rem;">
+      <p>Memuat data profil...</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
-
-import profile from '../assets/icons/profile.png'
-import mail from '../assets/icons/mail.svg'
-import weight from '../assets/icons/weight.svg'
-import height from '../assets/icons/height.svg'
-import date from '../assets/icons/calendar.svg'
-import calculator from '../assets/icons/calculator.svg'
-import editProfile from '../assets/icons/editProfile.svg'
+// Import Icons (Diberi prefix 'icon' agar tidak bentrok dengan nama variabel data)
+import iconProfile from '../assets/icons/profile.png'
+import iconMail from '../assets/icons/mail.svg'
+import iconWeight from '../assets/icons/weight.svg'
+import iconHeight from '../assets/icons/height.svg'
+import iconDate from '../assets/icons/calendar.svg'
+import iconCalculator from '../assets/icons/calculator.svg'
+import iconEdit from '../assets/icons/editProfile.svg'
 import NavbarUser from '../components/NavbarUser.vue'
+import proteinIcon from '../assets/icons/protein.svg'
+import caloriesIcon from '../assets/icons/Calori.svg'
 
 const router = useRouter()
+const profile = ref(null)
 const isEditing = ref(false)
-const isLoading = ref(true)
-const isSaving = ref(false)
-const userData = ref(null)
-const userGoals = ref({ target_kalori: 0, target_protein: 0 })
 
-let authSubscription = null
+// 1. Fungsi Ambil Data dari Backend
+const fetchProfile = async () => {
+  try {
+    const response = await axios.get('http://localhost:3000/api/pengguna/profile')
+    if (response.data.success) {
+      profile.value = response.data.data
+    }
+  } catch (error) {
+    console.error("Gagal memuat profil:", error)
+  }
+}
 
-
-
-
-
-onUnmounted(() => {
-  if (authSubscription) authSubscription.unsubscribe()
-})
-
+// 2. Format Tanggal Lahir (MM/DD/YYYY)
 const formattedBirthDate = computed(() => {
-  if (!userData.value || !userData.value.birthDate) return '-'
-  const [year, month, day] = userData.value.birthDate.split('-')
-  return `${month}/${day}/${year}`
+  if (!profile.value?.tanggal_lahir) return '-'
+  const date = new Date(profile.value.tanggal_lahir)
+  return date.toLocaleDateString('en-US')
 })
 
-
+// 3. Logika Edit (Placeholder untuk integrasi updateProfile)
 const toggleEdit = async () => {
   if (isEditing.value) {
-    await saveUserProfile()
-    isEditing.value = false
+    try {
+      await axios.put('http://localhost:3000/api/pengguna/profile', profile.value)
+      isEditing.value = false
+      alert('Profil berhasil diperbarui!')
+    } catch (error) {
+      alert('Gagal menyimpan perubahan')
+    }
   } else {
     isEditing.value = true
   }
 }
 
 const goToCalculator = () => router.push('/calculator')
+
+onMounted(fetchProfile)
 </script>
 
 <style scoped>

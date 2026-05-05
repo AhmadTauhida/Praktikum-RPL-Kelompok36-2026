@@ -28,5 +28,15 @@ export const PenggunaModel = {
     const { error } = await supabase.from("pengguna").delete().eq("id_pengguna", id);
     if (error) throw error;
     return { message: "Entitas pengguna & sel data terelasi berhasil dilikuidasi." };
+  },
+  async update(id, payload) {
+    const { data, error } = await supabase
+      .from("pengguna")
+      .update(payload)
+      .eq("id_pengguna", id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
   }
 };
