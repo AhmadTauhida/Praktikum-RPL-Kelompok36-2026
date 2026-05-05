@@ -107,12 +107,13 @@
 
 <script setup>
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import axios from 'axios'; // Wajib import axios
 
 // Komponen & Asset
 import NavbarUser from '../components/NavbarUser.vue';
 import caloriesIcon from '../assets/icons/Calori.png';
 import proteinIcon from '../assets/icons/protein.png';
-import placeholderImg from '../assets/icons/logo.png'; // Fallback jika img_url kosong
+import placeholderImg from '../assets/icons/logo.png';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const mealTimes = ['Breakfast', 'Lunch', 'Dinner'];
@@ -121,18 +122,27 @@ const mealTimes = ['Breakfast', 'Lunch', 'Dinner'];
 const isLoading = ref(true);
 const isSaving = ref(false);
 const userId = ref(null);
-const recipes = ref([]); // Data dari tabel 'resep'
+const recipes = ref([]); 
 const showModal = ref(false);
 const activeSlot = ref({ day: '', time: '' });
 
-let authSubscription = null;
-
-// Struktur untuk melacak id_planner tiap harinya agar tidak insert berulang
+// State untuk melacak ID (Sangat penting untuk operasi database)
 const plannerIds = ref({
   Monday: null, Tuesday: null, Wednesday: null, Thursday: null, Friday: null, Saturday: null, Sunday: null
 });
 
-// State Data Planner
+// Melacak id_detail untuk fitur hapus resep
+const detailIds = reactive({
+  Monday: { Breakfast: null, Lunch: null, Dinner: null },
+  Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
+  Wednesday: { Breakfast: null, Lunch: null, Dinner: null },
+  Thursday: { Breakfast: null, Lunch: null, Dinner: null },
+  Friday: { Breakfast: null, Lunch: null, Dinner: null },
+  Saturday: { Breakfast: null, Lunch: null, Dinner: null },
+  Sunday: { Breakfast: null, Lunch: null, Dinner: null },
+});
+
+// State Data Planner (UI Tampilan Resep)
 const planner = reactive({
   Monday: { Breakfast: null, Lunch: null, Dinner: null },
   Tuesday: { Breakfast: null, Lunch: null, Dinner: null },
@@ -143,13 +153,97 @@ const planner = reactive({
   Sunday: { Breakfast: null, Lunch: null, Dinner: null },
 });
 
-// 1. Ambil Katalog Resep dari DB
+// ==================== INISIALISASI DATA ====================
 
-onUnmounted(() => {
-  if (authSubscription) authSubscription.unsubscribe();
+onMounted(async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    isLoading.value = false;
+    return; // UI otomatis menampilkan blok 'Akses Ditolak'
+  }
+  
+  userId.value = token; // Menandakan user sudah terotentikasi di frontend
+  
+  await fetchRecipes();
+  await fetchMyPlanner(token);
 });
 
-// --- FUNGSI MODAL & AKSI ---
+// 1. Ambil Katalog Resep dari DB (Untuk ditampilkan di Modal)
+const fetchRecipes = async () => {
+  try {
+    const token = localStorage.getItem('token'); // Ambil token dulu
+
+    // Sisipkan token di headers (seperti fetchMyPlanner)
+    const res = await axios.get('http://localhost:3000/api/resep', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      // Mapping agar sesuai standar properti frontend
+      recipes.value = res.data.data.map(r => ({
+        id_resep: r.id_resep,
+        title: r.nama_resep,
+        calories: r.kalori,
+        protein: r.protein,
+        image: r.img_url
+      }));
+    }
+  } catch (error) {
+    console.error("Gagal memuat katalog resep:", error);
+  }
+};
+
+// 2. Ambil Jadwal Planner Spesifik User yang Login
+const fetchMyPlanner = async (token) => {
+  try {
+    // Memanggil API backend yang sudah menggunakan .eq("id_pengguna", ...)
+    const res = await axios.get('http://localhost:3000/api/meal-planner', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      const userSchedule = res.data.data; // Mengandung 7 hari beserta detailnya
+
+      userSchedule.forEach(dayPlan => {
+        const dayName = dayPlan.hari;
+        
+        // Simpan id_planner (sebagai referensi saat mau insert resep baru)
+        if (plannerIds.value[dayName] !== undefined) {
+          plannerIds.value[dayName] = dayPlan.id_planner;
+        }
+
+        // Jika hari tersebut punya detail resep yang sudah terisi
+        if (dayPlan.detail_planner && dayPlan.detail_planner.length > 0) {
+          dayPlan.detail_planner.forEach(detail => {
+            const timeSlot = detail.waktu; // "Breakfast", "Lunch", atau "Dinner"
+            const resepDb = detail.resep;
+            
+            // Masukkan ke state UI agar muncul di layar
+            if (planner[dayName] && planner[dayName][timeSlot] !== undefined) {
+              planner[dayName][timeSlot] = {
+                id_resep: resepDb.id_resep,
+                title: resepDb.nama_resep,
+                calories: resepDb.kalori,
+                protein: resepDb.protein,
+                image: resepDb.img_url
+              };
+              
+              // Simpan id_detail agar tombol hapus bisa bekerja
+              detailIds[dayName][timeSlot] = detail.id_detail;
+            }
+          });
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Gagal memuat jadwal user:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+
+// ==================== FUNGSI MODAL & AKSI ====================
 
 const openModal = (day, time) => {
   activeSlot.value = { day, time };
@@ -160,9 +254,68 @@ const closeModal = () => {
   showModal.value = false;
 };
 
-// 3. Simpan Resep ke Plan
+// 3. Simpan Resep ke Plan (Insert ke detail_planner)
+const selectRecipe = async (recipe) => {
+  isSaving.value = true;
+  const token = localStorage.getItem('token');
+  const { day, time } = activeSlot.value;
+  const id_planner = plannerIds.value[day];
 
-// 4. Hapus Resep dari Plan
+  if (!id_planner) {
+    alert("Terjadi kesalahan. Data hari belum di-generate di database.");
+    isSaving.value = false;
+    return;
+  }
+
+  try {
+    const res = await axios.post('http://localhost:3000/api/meal-planner/recipe', {
+      id_planner: id_planner,
+      id_resep: recipe.id_resep,
+      waktu: time
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      // Update UI dan ID tracking
+      planner[day][time] = recipe;
+      detailIds[day][time] = res.data.data.id_detail;
+      closeModal();
+    }
+  } catch (error) {
+    console.error("Gagal menambahkan resep ke jadwal:", error);
+    alert("Gagal menambahkan resep.");
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+// 4. Hapus Resep dari Plan (Delete dari detail_planner)
+const removeRecipe = async (day, time) => {
+  if (!confirm(`Hapus resep ini dari jadwal ${time} hari ${day}?`)) return;
+
+  isSaving.value = true;
+  const token = localStorage.getItem('token');
+  const id_detail = detailIds[day][time];
+
+  try {
+    const res = await axios.delete(`http://localhost:3000/api/meal-planner/recipe/${id_detail}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (res.data.success) {
+      // Kosongkan slot di UI
+      planner[day][time] = null;
+      detailIds[day][time] = null;
+    }
+  } catch (error) {
+    console.error("Gagal menghapus resep:", error);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
+// ==================== KALKULASI ====================
 
 // Kalkulasi Nutrisi Harian
 const calculateDailyTotals = (day) => {
@@ -176,7 +329,7 @@ const calculateDailyTotals = (day) => {
   });
   return { 
     calories: Math.round(calories), 
-    protein: Math.round(protein * 10) / 10 // Pembulatan 1 angka desimal
+    protein: Math.round(protein * 10) / 10 
   };
 };
 </script>

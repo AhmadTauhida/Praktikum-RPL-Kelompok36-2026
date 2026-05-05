@@ -21,26 +21,7 @@
           />
         </div>
         
-        <div class="dropdowns">
-          <div class="filter-wrapper">
-            <img :src="filter" alt="Filter" class="filter-icon" />
-            <select v-model="selectedDiet" class="filter-select has-icon">
-              <option value="All">All Diets</option>
-              <option value="vegetarian">Vegetarian</option>
-              <option value="paleo">Paleo</option>
-              <option value="keto">Keto</option>
-              <option value="balanced">Balanced</option>
-            </select>
-          </div>
 
-          <div class="filter-wrapper">
-            <select v-model="selectedSort" class="filter-select">
-              <option value="none">Sort by: Default</option>
-              <option value="low-cal">Lowest Calorie</option>
-              <option value="high-pro">Highest Protein</option>
-            </select>
-          </div>
-        </div>
       </div>
 
       <div v-if="loading" class="loading-state">
@@ -61,7 +42,6 @@
           >
             <div class="card-image">
               <img :src="recipe.image" :alt="recipe.title" class="img-placeholder" />
-              <!-- Menampilkan kumpulan tag untuk array kategori -->
               <div class="diet-tags">
                 <span 
                   v-for="(tag, index) in recipe.diets" 
@@ -99,12 +79,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import NavbarUser from '../components/NavbarUser.vue'
+import axios from 'axios'
 
 // Icons
 import searchIcon from '../assets/icons/search.png'
 import protein from '../assets/icons/protein.png'
 import calories from '../assets/icons/Calori.png'
-import filter from '../assets/icons/filter.png'
+
 
 const router = useRouter()
 
@@ -113,11 +94,43 @@ const goToRecipe = (id) => {
 }
 
 const searchQuery = ref('')
-const selectedDiet = ref('All')
 const selectedSort = ref('none')
 
 const recipes = ref([])
 const loading = ref(true)
+
+const fetchRecipes = async () => {
+  try {
+    loading.value = true;
+    console.log("Memulai fetching resep..."); // Diagnosa 1
+    
+    const response = await axios.get('http://localhost:3000/api/resep');
+    
+    console.log("Data mentah dari backend:", response.data); // Diagnosa 2
+
+    // Pastikan kita mengambil response.data.data karena di controller 
+    // kamu mengirim res.status(200).json({ success: true, data: resep });
+    if (response.data && response.data.success) {
+      const rawData = response.data.data;
+      
+      recipes.value = rawData.map(item => ({
+        id: item.id_resep,
+        title: item.nama_resep,
+        description: item.deskripsi || 'No description available',
+        calories: item.kalori || 0,
+        protein: item.protein || 0,
+        image: item.img_url || 'https://via.placeholder.com/400x300?text=FitKitchen',
+        diets: [] 
+      }));
+      
+      console.log("Hasil mapping resep:", recipes.value); // Diagnosa 3
+    }
+  } catch (error) {
+    console.error("Gagal memuat resep. Detail error:", error.response || error);
+  } finally {
+    loading.value = false;
+  }
+}
 
 onMounted(() => {
   fetchRecipes()
@@ -126,15 +139,7 @@ onMounted(() => {
 const filteredRecipes = computed(() => {
   let result = recipes.value
 
-  // Filter berdasarkan Array Diet
-  if (selectedDiet.value !== 'All') {
-    const dietToFind = selectedDiet.value.toLowerCase()
-    result = result.filter(r => 
-      r.diets.some(tag => tag.toLowerCase() === dietToFind)
-    )
-  }
-
-  // Filter berdasarkan Pencarian
+  // Filter Search
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(r => 
@@ -149,6 +154,9 @@ const filteredRecipes = computed(() => {
   } else if (selectedSort.value === 'high-pro') {
     result = result.slice().sort((a, b) => b.protein - a.protein)
   }
+
+  // CATATAN: Filter diet dihapus sementara dari computed property ini 
+  // karena berdasarkan skema database Supabase-mu, belum ada kolom untuk tag diet.
 
   return result
 })

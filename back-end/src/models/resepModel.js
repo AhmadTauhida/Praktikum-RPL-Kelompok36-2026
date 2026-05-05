@@ -2,51 +2,40 @@ import { supabase } from "../config/supabaseClient.js";
 
 export const ResepModel = {
   async getAll() {
-    const { data, error } = await supabase
-      .from("resep")
-      .select(`*, pengguna (username)`);
+    const { data, error } = await supabase.from("resep").select("*");
     if (error) throw error;
     return data;
   },
 
   async getById(id) {
-    const { data, error } = await supabase
-      .from("resep")
-      .select(`*, pengguna (username)`)
-      .eq("id_resep", id)
-      .single(); // single() karena kita hanya butuh 1 object, bukan array
+    const { data, error } = await supabase.from("resep").select("*").eq("id_resep", id).single();
+    // Supabase mengembalikan error 'PGRST116' jika tidak ada baris yang ditemukan
+    if (error && error.code !== "PGRST116") throw error;
+    return data || null;
+  },
+
+  // Fungsi tambahan yang akan sangat berguna untuk mengambil resep milik user tertentu
+  async getByUserId(id_pengguna) {
+    const { data, error } = await supabase.from("resep").select("*").eq("id_pengguna", id_pengguna);
     if (error) throw error;
     return data;
   },
 
   async create(payload) {
-    const { data, error } = await supabase
-      .from("resep")
-      .insert([payload])
-      .select()
-      .single();
+    const { data, error } = await supabase.from("resep").insert([payload]).select().single();
     if (error) throw error;
     return data;
   },
 
   async update(id, payload) {
-    const { data, error } = await supabase
-      .from("resep")
-      .update(payload)
-      .eq("id_resep", id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from("resep").update(payload).eq("id_resep", id).select().single();
     if (error) throw error;
     return data;
   },
 
-  async delete(id) {
-    const { data, error } = await supabase
-      .from("resep")
-      .delete()
-      .eq("id_resep", id)
-      .select(); // Tambahkan select() jika ingin mengembalikan data yang dihapus
+  async remove(id) {
+    const { error } = await supabase.from("resep").delete().eq("id_resep", id);
     if (error) throw error;
-    return data;
+    return { message: "Entitas resep berhasil dilikuidasi." };
   }
 };

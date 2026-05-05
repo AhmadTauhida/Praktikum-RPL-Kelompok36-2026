@@ -21,28 +21,39 @@
 
     <div class="user-actions">
       <div class="user-info">
-        <span class="user-name">{{ userProfile.username || 'Loading...' }}</span>
-        <span class="user-role">{{ userProfile.role || 'Guest' }}</span>
+        <!-- Tampilkan nama user jika login, tampilkan Guest jika belum -->
+        <span class="user-name">{{ isLoggedIn ? userProfile.username : 'Guest' }}</span>
+        <!-- Tampilkan role user jika login, tampilkan instruksi jika guest -->
+        <span class="user-role">{{ isLoggedIn ? userProfile.role : 'Login untuk melanjutkan' }}</span>
       </div>
-      <button class="btn-logout" @click="handleLogout">
-        <img :src="logoutIcon" alt="Logout" class="nav-custom-icon" /> Logout
+      
+      <!-- Tampilkan Logout hanya jika user sudah login -->
+      <button v-if="isLoggedIn" class="btn-logout" @click="handleLogout" :disabled="isLoggingOut">
+        <img :src="logoutIcon" alt="Logout" class="nav-custom-icon" /> 
+        {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
       </button>
+
+      <!-- Tampilkan Login button jika belum login -->
+      <router-link v-else to="/login" class="btn-login">
+        <img :src="logoutIcon" alt="Login" class="nav-custom-icon" /> Login
+      </router-link>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router' // <-- TAMBAHKAN useRoute
 
 // Import Icons
 import homeIcon from '../assets/icons/home.png'
 import mealIcon from '../assets/icons/planner.png'
 import profileIcon from '../assets/icons/profile.png'
-import logoutIcon from '../assets/icons/logout.png'
+import logoutIcon from '../assets/icons/logout.svg'
 import logo from '../assets/icons/logo.png'
 
 const router = useRouter()
+const route = useRoute() // <-- Inisialisasi route
 
 // State untuk menyimpan data user
 const userProfile = ref({
@@ -50,17 +61,70 @@ const userProfile = ref({
   role: ''
 })
 
-// Fungsi untuk mengambil data user dari Supabase
+const isLoggedIn = ref(false)
+const isLoggingOut = ref(false)
 
-// Jalankan fetch saat navbar dimuat
+// ==================== PERUBAHAN UTAMA ====================
+// Pantau perubahan URL/Rute. Setiap kali pindah halaman (termasuk setelah sukses login), 
+// Navbar akan mengecek ulang localStorage secara otomatis.
+watch(
+  () => route.path,
+  () => {
+    checkAuthStatus()
+  }
+)
+
 onMounted(() => {
-  fetchUserProfile()
+  checkAuthStatus()
+  // Dengarkan perubahan localStorage dari tab lain (tetap dipertahankan untuk keamanan multi-tab)
+  window.addEventListener('storage', checkAuthStatus)
 })
 
-// Fungsi logout asli menggunakan Supabase
+onUnmounted(() => {
+  window.removeEventListener('storage', checkAuthStatus)
+})
 
+// ==================== FUNGSI AUTH ====================
+
+/**
+ * Cek status autentikasi murni dari localStorage (JWT Based)
+ */
+const checkAuthStatus = () => {
+  const token = localStorage.getItem('token')
+  const userRole = localStorage.getItem('userRole')
+  const username = localStorage.getItem('username') 
+  
+  if (token) {
+    isLoggedIn.value = true
+    userProfile.value = {
+      username: username || 'User', // Fallback jika username kosong
+      role: userRole || 'user'
+    }
+  } else {
+    isLoggedIn.value = false
+    userProfile.value = { username: '', role: '' }
+  }
+}
+
+/**
+ * Handle logout: Hapus sesi lokal dan redirect
+ */
+const handleLogout = () => {
+  isLoggingOut.value = true
+
+  // Clear semua data kredensial di localStorage
+  localStorage.removeItem('token')
+  localStorage.removeItem('userRole')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('username')
+  localStorage.removeItem('isAuthenticated')
+
+  // Update UI state
+  isLoggedIn.value = false
+  userProfile.value = { username: '', role: '' }
+  isLoggingOut.value = false
+
+  // Redirect ke halaman Landing
+  router.push({ name: 'Landing' })
+}
 </script>
-
-<style scoped>
-/* Styling tetap kosong sesuai permintaanmu */
-</style>

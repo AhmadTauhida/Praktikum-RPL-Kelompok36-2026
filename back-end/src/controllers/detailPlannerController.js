@@ -16,5 +16,22 @@ export const DetailPlannerController = {
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
     }
+  },
+  async update(req, res) {
+    try {
+      const detailUpdated = await DetailPlannerModel.update(req.params.id, req.body);
+      res.status(200).json({ success: true, data: detailUpdated });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
+},
+  async delete(req, res) {
+    try {
+      const detailDeleted = await DetailPlannerModel.delete(req.params.id);
+      res.status(200).json({ success: true, data: detailDeleted });
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
+    }
   }
+
 };

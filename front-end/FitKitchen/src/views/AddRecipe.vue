@@ -125,7 +125,7 @@ const form = reactive({
   kalori: null, 
   protein: null, 
   prep_time: null,
-  kategori_diet: [], // Array untuk menyimpan pilihan checkbox
+  kategori_diet: [], 
   bahan: [''], 
   langkah: ['']
 })

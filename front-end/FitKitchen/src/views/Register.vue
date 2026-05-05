@@ -158,7 +158,9 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios' // <-- TAMBAHKAN IMPORT AXIOS
 
+// Import Icons
 import logo from '../assets/icons/logo.png'
 import mail from '../assets/icons/mail.svg'
 import lock from '../assets/icons/lock.svg'
@@ -226,6 +228,37 @@ const isFormValid = computed(() => {
   )
 })
 
+// FUNGSI HANDLE REGISTER YANG BARU
+const handleRegister = async () => {
+  loading.value = true
+  registerError.value = ''
+  
+  try {
+    // 1. Panggil API Registrasi
+    const response = await axios.post('http://localhost:3000/api/pengguna/register', {
+      username: form.value.username,
+      email: form.value.email,
+      password: form.value.password,
+      // Jika di tabel pengguna kamu ada kolom berat, tinggi, dll, kirimkan juga:
+      berat_badan: form.value.weight, 
+      tinggi_badan: form.value.height,
+      tanggal_lahir: form.value.birthDate,
+      gender: form.value.gender
+    })
+
+    if (response.data.success) {
+      // 2. Jika sukses, arahkan ke halaman login
+      // Atau kamu bisa langsung login-kan user dengan memanggil API login di sini
+      alert('Registrasi berhasil! Silakan login.')
+      router.push('/login')
+    }
+  } catch (err) {
+    // 3. Tangkap pesan error dari backend (misal: "Email sudah terdaftar")
+    registerError.value = err.response?.data?.error || 'Terjadi kesalahan saat membuat akun. Coba lagi nanti.'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>

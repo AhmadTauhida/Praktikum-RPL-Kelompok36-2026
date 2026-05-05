@@ -84,9 +84,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios' // JANGAN LUPA IMPORT AXIOS!
 import NavbarUser from '../components/NavbarUser.vue'
 
-// Import asset lokal untuk Icon yang tadinya numpang di objek recipe
+// Import asset lokal untuk Icon
 import caloriesIcon from '../assets/icons/Calori.svg'
 import proteinIcon from '../assets/icons/protein.svg'
 import timeIcon from '../assets/icons/clock.svg' 
@@ -97,8 +98,51 @@ const router = useRouter()
 const recipe = ref(null)
 const loading = ref(true)
 
-// Mengambil 1 resep berdasarkan ID dari URL parameter
+// ==================== FETCH API (SINGLE RECIPE) ====================
+const fetchRecipeDetails = async () => {
+  try {
+    loading.value = true
+    // Ambil ID dari parameter URL (berdasarkan settingan router '/menu/:id')
+    const recipeId = route.params.id 
+    
+    // Panggil API getById yang sudah kita buka aksesnya di rute publik
+    const response = await axios.get(`http://localhost:3000/api/resep/${recipeId}`)
+    
+    if (response.data && response.data.success) {
+      const item = response.data.data
+      
+      // Mapping dari Database ke format yang diminta Template HTML-mu
+      recipe.value = {
+        id: item.id_resep,
+        title: item.nama_resep,
+        description: item.deskripsi || 'Deskripsi tidak tersedia.',
+        calories: item.kalori || 0,
+        protein: item.protein || 0,
+        prepTime: item.prep_time || 0,
+        image: item.img_url || 'https://via.placeholder.com/900x400?text=FitKitchen',
+        diet: 'Balanced', // Fallback statis karena tabel database belum punya diet_tags
+        
+        // Memastikan bahan dan langkah berbentuk Array (karena di DB tipenya jsonb)
+        ingredients: Array.isArray(item.bahan) ? item.bahan : [],
+        steps: Array.isArray(item.langkah) ? item.langkah : []
+      }
+    }
+  } catch (error) {
+    console.error("Gagal memuat detail resep:", error)
+    recipe.value = null // Set null agar UI menampilkan pesan "Recipe not found!"
+  } finally {
+    loading.value = false
+  }
+}
 
+// Fungsi untuk tombol Back
+const goBack = () => {
+  router.back() // Kembali ke halaman sebelumnya (misal: Landing)
+}
+
+onMounted(() => {
+  fetchRecipeDetails()
+})
 </script>
 
 <style scoped>

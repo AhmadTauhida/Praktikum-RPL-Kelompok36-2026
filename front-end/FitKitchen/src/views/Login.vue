@@ -69,6 +69,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 // Import Icons
 import logo from '../assets/icons/logo.png'
@@ -98,9 +99,41 @@ const validateEmail = () => {
   }
 }
 
-const isFormValid = computed(() => {
-  return email.value && password.value && !emailError.value
-})
+const handleLogin = async () => {
+  loading.value = true
+  loginError.value = ''
+  
+  try {
+    // Memanggil API Backend
+    const response = await axios.post('http://localhost:3000/api/pengguna/login', {
+      email: email.value,
+      password: password.value
+    })
+
+    if (response.data.success) {
+      // Simpan data ke localStorage untuk Navigation Guard
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('userRole', response.data.data.role)
+      localStorage.setItem('userId', response.data.data.id)
+      localStorage.setItem('username', response.data.data.username)
+      localStorage.setItem('isAuthenticated', 'true')
+
+      // Redirect berdasarkan role
+      if (response.data.data.role === 'admin') {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
+    }
+  } catch (err) {
+    // Menangkap pesan error dari backend (misal: "Email tidak ditemukan")
+    loginError.value = err.response?.data?.error || 'Terjadi kesalahan koneksi ke server.'
+  } finally {
+    loading.value = false
+  }
+}
+
+const isFormValid = computed(() => email.value && password.value && !emailError.value)
 </script>
 
 <style scoped>
