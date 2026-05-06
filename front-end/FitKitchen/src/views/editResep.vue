@@ -32,28 +32,21 @@
               <textarea v-model="form.deskripsi" rows="3" placeholder="Brief description of the recipe" required></textarea>
             </div>
 
-            <!-- Tambahan Form Kategori Diet -->
-            <div class="input-group">
-              <label>Diet Categories * <span class="help-text-inline">(Select at least one)</span></label>
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Balanced" v-model="form.kategori_diet"> Balanced
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Keto" v-model="form.kategori_diet"> Keto
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Paleo" v-model="form.kategori_diet"> Paleo
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Vegetarian" v-model="form.kategori_diet"> Vegetarian
-                </label>
-              </div>
-            </div>
+            
+
 
             <div class="input-group">
-              <label>Image URL</label>
-              <input v-model="form.img_url" type="text" placeholder="https://example.com/image.jpg">
+              <label>Recipe Image</label>
+              
+              <!-- Tampilkan gambar lama jika ada -->
+              <div v-if="form.img_url" style="margin-bottom: 1rem;">
+                <p class="help-text-inline" style="margin-left: 0; margin-bottom: 0.5rem;">Current Image:</p>
+                <img :src="form.img_url" alt="Current Recipe Image" style="max-width: 200px; border-radius: 8px; border: 1px solid #E5E7EB;" />
+              </div>
+
+              <!-- Input file untuk upload gambar baru -->
+              <input type="file" @change="handleFileChange" accept="image/*" style="background: white;">
+              <p class="help-text-inline" style="margin-left: 0; margin-top: 0.5rem;">Leave blank if you don't want to change the image.</p>
             </div>
 
             <div class="row-inputs">
@@ -117,6 +110,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 import backButton from '../assets/icons/backButton.svg'
+import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
@@ -125,6 +119,7 @@ const recipeId = route.params.id
 
 const loading = ref(false)
 const fetching = ref(true)
+const imageFile = ref(null)
 
 const form = reactive({
   nama_resep: '',
@@ -133,10 +128,11 @@ const form = reactive({
   kalori: null,
   protein: null,
   prep_time: null,
-  kategori_diet: [], // Array untuk checkbox
   bahan: [''],
   langkah: ['']
 })
+
+const API_URL = 'http://localhost:3000/api/resep'
 
 onMounted(() => {
   if (recipeId) {
@@ -146,6 +142,101 @@ onMounted(() => {
     router.push('/RecipeManagement')
   }
 })
+
+const fetchRecipeData = async () => {
+  try {
+    const token = localStorage.getItem('token'); // Sesuaikan dengan cara kamu menyimpan JWT
+    const response = await fetch(`${API_URL}/${recipeId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const data = result.data;
+      form.nama_resep = data.nama_resep;
+      form.deskripsi = data.deskripsi;
+      form.kalori = data.kalori;
+      form.protein = data.protein;
+      form.prep_time = data.prep_time;
+      form.img_url = data.img_url; // Disimpan untuk preview gambar lama
+      
+      // Parse JSON array yang datang dari Supabase
+      form.bahan = typeof data.bahan === 'string' ? JSON.parse(data.bahan) : data.bahan;
+      form.langkah = typeof data.langkah === 'string' ? JSON.parse(data.langkah) : data.langkah;
+      
+     
+    } else {
+      alert("Gagal memuat resep: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    alert("Terjadi kesalahan jaringan saat memuat resep.");
+  } finally {
+    fetching.value = false;
+  }
+}
+
+// --- 2. Handle File Upload ---
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    imageFile.value = file; // Simpan file ke ref untuk disubmit nanti
+  }
+}
+
+// --- 3. Handle Submit Update ---
+const handleSubmit = async () => {
+  loading.value = true;
+  try {
+    const token = localStorage.getItem('token');
+    
+    // Wajib pakai FormData karena kita mengirim file (multipart/form-data)
+    const formData = new FormData();
+    
+    formData.append('nama_resep', form.nama_resep);
+    formData.append('deskripsi', form.deskripsi);
+    formData.append('kalori', form.kalori);
+    formData.append('protein', form.protein);
+    formData.append('prep_time', form.prep_time);
+    
+    // Array harus di-stringify sebelum dikirim lewat FormData
+    formData.append('bahan', JSON.stringify(form.bahan));
+    formData.append('langkah', JSON.stringify(form.langkah));
+    
+    // Jika ada file gambar yang baru dipilih, masukkan ke FormData
+    // Nama 'image' harus sama dengan nama di upload.single('image') pada backend
+    if (imageFile.value) {
+      formData.append('image', imageFile.value);
+    }
+
+    const response = await fetch(`${API_URL}/${recipeId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`
+        // PENTING: Jangan set 'Content-Type' secara manual saat menggunakan FormData dengan fetch!
+        // Browser akan otomatis menyetelnya ke 'multipart/form-data' beserta boundary-nya.
+      },
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert("Resep berhasil diperbarui!");
+      router.push('/RecipeManagement');
+    } else {
+      alert("Gagal memperbarui resep: " + result.error);
+    }
+  } catch (error) {
+    console.error("Error updating recipe:", error);
+    alert("Terjadi kesalahan jaringan saat memperbarui resep.");
+  } finally {
+    loading.value = false;
+  }
+}
 
 const addIngredient = () => form.bahan.push('')
 const removeIngredient = (idx) => {

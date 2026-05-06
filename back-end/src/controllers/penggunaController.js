@@ -6,10 +6,22 @@ import { supabase } from "../config/supabaseClient.js"; // Pastikan ini sudah di
 const JWT_SECRET = process.env.JWT_SECRET || "kunci_rahasia_sistem_absolut_123";
 
 export const PenggunaController = {
-  async getAll(req, res) {
+async getAll(req, res) {
     try {
+      // 1. Tambahan proteksi internal (opsional jika sudah ada di middleware)
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: "Akses terlarang: Hanya Admin." });
+      }
+
       const pengguna = await PenggunaModel.getAll();
-      res.status(200).json({ success: true, data: pengguna });
+
+      // 2. JANGAN kirim password ke frontend
+      const dataAman = pengguna.map(user => {
+        const { password, ...tanpaPassword } = user;
+        return tanpaPassword;
+      });
+
+      res.status(200).json({ success: true, data: dataAman });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
@@ -167,8 +179,13 @@ export const PenggunaController = {
     }
   },
 
-  async remove(req, res) {
+async remove(req, res) {
     try {
+      // Mencegah admin menghapus dirinya sendiri secara tidak sengaja
+      if (req.params.id === req.user.id) {
+        return res.status(400).json({ success: false, error: "Anda tidak bisa menghapus akun sendiri melalui panel ini." });
+      }
+
       const hasil = await PenggunaModel.remove(req.params.id);
       res.status(200).json({ success: true, data: hasil });
     } catch (err) {

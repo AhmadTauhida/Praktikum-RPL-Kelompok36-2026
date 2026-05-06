@@ -90,15 +90,60 @@ export const ResepController = {
     }
   },
 
-  async update(req, res) {
-    // ... (Kode update biarkan sama untuk sementara, pastikan nanti update juga menangani req.file jika admin ganti foto)
+async update(req, res) {
     try {
-      const id = req.params.id;
-      const payloadUpdate = req.body;
-      payloadUpdate.updated_at = new Date().toISOString();
-      const resepDiperbarui = await ResepModel.update(id, payloadUpdate);
+      const id_resep = req.params.id;
+      const id_pengguna_login = req.user.id; // Dari JWT Token
+
+      // 1. Cek apakah resep ada dan milik pengguna yang sedang login
+      const resepLama = await ResepModel.getById(id_resep);
+      if (!resepLama) {
+        return res.status(404).json({ success: false, error: "Resep tidak ditemukan." });
+      }
+   
+
+      // 2. Ekstraksi data teks dari form
+      let { nama_resep, deskripsi, bahan, langkah, kalori, protein, prep_time } = req.body;
+      
+      // Siapkan payload awal
+      let payloadUpdate = { updated_at: new Date().toISOString() };
+
+      // 3. Masukkan data ke payload HANYA jika data tersebut dikirim (untuk mendukung partial update)
+      if (nama_resep) payloadUpdate.nama_resep = nama_resep;
+      if (deskripsi !== undefined) payloadUpdate.deskripsi = deskripsi;
+
+      // Parsing tipe data karena dikirim melalui multipart/form-data
+      if (bahan) payloadUpdate.bahan = typeof bahan === 'string' ? JSON.parse(bahan) : bahan;
+      if (langkah) payloadUpdate.langkah = typeof langkah === 'string' ? JSON.parse(langkah) : langkah;
+      if (kalori) payloadUpdate.kalori = parseInt(kalori);
+      if (protein) payloadUpdate.protein = parseFloat(protein);
+      if (prep_time) payloadUpdate.prep_time = parseInt(prep_time);
+
+      // 4. Logika Upload Gambar Baru (Jika user mengganti foto)
+      if (req.file) {
+        const file = req.file;
+        const fileExt = file.originalname.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `resep_images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('recipe_images')
+          .upload(filePath, file.buffer, {
+            contentType: file.mimetype,
+          });
+
+        if (uploadError) throw new Error("Gagal mengunggah gambar baru: " + uploadError.message);
+
+        const { data: publicUrlData } = supabase.storage.from('recipe_images').getPublicUrl(filePath);
+        payloadUpdate.img_url = publicUrlData.publicUrl;
+      }
+
+      // 5. Eksekusi Update ke Database
+      const resepDiperbarui = await ResepModel.update(id_resep, payloadUpdate);
       res.status(200).json({ success: true, data: resepDiperbarui });
+
     } catch (err) {
+      console.error("Crash di update resep:", err);
       res.status(400).json({ success: false, error: err.message });
     }
   },

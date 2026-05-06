@@ -152,10 +152,14 @@ const fetchDashboardData = async () => {
     }
 
     // --- AMBIL DATA PENGGUNA ---
-    const userRes = await axios.get('http://localhost:3000/api/pengguna', config)
-    const allUsers = userRes.data.data || []
+    const userRes = await axios.get('http://localhost:3000/api/pengguna/admin/users', config)
+    const fetchedUsers = userRes.data.data || []
     
-    // 1. Total Users
+    // PERBAIKAN: Filter data untuk hanya mengambil entitas yang memiliki role 'user'
+    // Hal ini akan otomatis menyingkirkan akun 'admin' dari perhitungan statistik
+    const allUsers = fetchedUsers.filter(user => user.role === 'user')
+    
+    // 1. Total Users (Sekarang hanya menghitung role 'user')
     stats.value.totalUsers = allUsers.length
 
     // 2. Hitung User Baru Bulan Ini
