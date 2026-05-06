@@ -22,7 +22,10 @@ const routes = [
     component: Login,
     meta: { requiresGuest: true } 
   },
-  { path: '/register', name: 'Register', component: Register,
+  { 
+    path: '/register', 
+    name: 'Register', 
+    component: Register,
     meta: { requiresGuest: true, locked: true }
   },
 
@@ -71,10 +74,13 @@ const routes = [
     component: editResep,
     meta: { requiresAuth: true, requiresAdmin: true, locked: true }
   },
+    { path: '/RecipeManagement', name: 'RecipeManagement', component: RecipeManagement,
+    meta: { requiresAuth: true, requiresAdmin: true, locked: true }
+  },
 
   // Rute Publik lainnya
   { path: '/menu/:id', name: 'MenuDetail', component: Menu },
-  { path: '/RecipeManagement', name: 'RecipeManagement', component: RecipeManagement },
+
 ]
 
 const router = createRouter({
@@ -86,12 +92,12 @@ router.beforeEach((to, from) => {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('userRole')
   
-  // 1. CEK AKSES URL MANUAL (State-Locked)
-  // Menggunakan gaya modern: cukup return object rute tujuan
   const isManualAccess = !from.name;
 
-  if (to.meta.locked && isManualAccess) {
-    return { name: 'Landing' };
+  // 1. PROTEKSI GUEST (Mencegah user/admin yang sudah login masuk ke Login/Register)
+  if (to.meta.requiresGuest && token) {
+    // Jika admin iseng ke /login, kembalikan ke dashboard admin. Jika user, ke landing.
+    return userRole === 'admin' ? { name: 'AdminDashboard' } : { name: 'Landing' };
   }
 
   // 2. PROTEKSI AUTHENTICATION
@@ -99,18 +105,29 @@ router.beforeEach((to, from) => {
     return { name: 'Login' };
   }
 
-  // 3. PROTEKSI ROLE (Admin Only)
+  // 3. PROTEKSI ADMIN KE HALAMAN USER (Fitur Baru)
+  // Membaca logika: "Jika rute ini butuh login, TAPI bukan rute admin, dan yang akses adalah admin"
+  if (to.meta.requiresAuth && !to.meta.requiresAdmin && userRole === 'admin') {
+    return { name: 'AdminDashboard' }; // Tendang admin ke dashboard
+  }
+
+  // 4. PROTEKSI ROLE (User biasa mencoba masuk ke halaman Admin)
   if (to.meta.requiresAdmin && userRole !== 'admin') {
     return { name: 'Landing' };
   }
 
-  // 4. PROTEKSI GUEST (Mencegah user login akses Login/Register)
-  if (to.meta.requiresGuest && token) {
-    return { name: 'Landing' };
+  // 5. CEK AKSES URL MANUAL (State-Locked)
+  // Ditaruh paling bawah agar proteksi auth & role bekerja lebih dulu.
+  if (to.meta.locked && isManualAccess) {
+    // Jika yang refresh adalah admin, amankan agar tidak terpental jika refresh halaman admin sendiri
+    if (userRole === 'admin' && to.name !== 'AdminDashboard') {
+      return { name: 'AdminDashboard' };
+    } 
+    // Jika yang refresh adalah user biasa
+    else if (userRole !== 'admin') {
+      return { name: 'Landing' };
+    }
   }
-
-  // Jika tidak masuk ke kondisi di atas, navigasi diizinkan secara otomatis
-  // Tidak perlu memanggil next() lagi di Vue Router 4 jika sudah menggunakan return
 });
 
 export default router

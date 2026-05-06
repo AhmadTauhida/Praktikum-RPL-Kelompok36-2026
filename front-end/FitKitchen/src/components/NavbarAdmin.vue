@@ -27,12 +27,15 @@
 
       <div class="user-actions">
         <div class="user-info">
+          <!-- Menampilkan data dari adminProfile secara dinamis -->
           <span class="user-name">{{ adminProfile.username || 'Loading...' }}</span>
           <span class="user-role">{{ adminProfile.role || 'Admin' }}</span>
         </div>
-        <button class="btn-logout" @click="handleLogout">
+        
+        <!-- Tombol logout dengan indikator loading -->
+        <button class="btn-logout" @click="handleLogout" :disabled="isLoggingOut">
           <img :src="logoutIcon" alt="Logout" class="nav-custom-icon" />
-          Logout
+          {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
         </button>
       </div>
     </div>
@@ -40,8 +43,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+// 1. PERBAIKAN IMPORT: Menambahkan watch dan onUnmounted
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
 // Import Icons
 import logo from '../assets/icons/logo.svg' 
@@ -51,19 +55,78 @@ import userIcon from '../assets/icons/users.svg'
 import logoutIcon from '../assets/icons/logout.svg'
 
 const router = useRouter()
+const route = useRoute() 
 
-// State untuk profil admin
+// 2. PERBAIKAN VARIABEL: Menyesuaikan dengan template (adminProfile)
 const adminProfile = ref({
   username: '',
   role: ''
 })
 
-// Fungsi untuk mengambil data profil dari tabel admin
+const isLoggedIn = ref(false)
+const isLoggingOut = ref(false)
+
+// Pantau perubahan URL/Rute untuk update data navbar otomatis
+watch(
+  () => route.path,
+  () => {
+    checkAuthStatus()
+  }
+)
+
 onMounted(() => {
-  fetchAdminProfile()
+  checkAuthStatus()
+  window.addEventListener('storage', checkAuthStatus)
 })
 
+onUnmounted(() => {
+  window.removeEventListener('storage', checkAuthStatus)
+})
 
+// ==================== FUNGSI AUTH ====================
+
+/**
+ * Cek status autentikasi murni dari localStorage
+ */
+const checkAuthStatus = () => {
+  const token = localStorage.getItem('token')
+  const userRole = localStorage.getItem('userRole')
+  const username = localStorage.getItem('username') 
+  
+  if (token) {
+    isLoggedIn.value = true
+    // Assign ke adminProfile agar muncul di template
+    adminProfile.value = {
+      username: username || 'Admin', 
+      role: userRole || 'admin'
+    }
+  } else {
+    isLoggedIn.value = false
+    adminProfile.value = { username: '', role: '' }
+  }
+}
+
+/**
+ * Handle logout: Hapus sesi lokal dan redirect
+ */
+const handleLogout = () => {
+  isLoggingOut.value = true
+
+  // Clear semua data kredensial di localStorage
+  localStorage.removeItem('token')
+  localStorage.removeItem('userRole')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('username')
+  localStorage.removeItem('isAuthenticated')
+
+  // Update UI state
+  isLoggedIn.value = false
+  adminProfile.value = { username: '', role: '' }
+  isLoggingOut.value = false
+
+  // Redirect ke halaman Landing
+  router.push({ name: 'Landing' })
+}
 </script>
 
 <style scoped>

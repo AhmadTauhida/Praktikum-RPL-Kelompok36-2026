@@ -2,7 +2,6 @@
   <NavbarAdmin />
   <main class="dashboard-content">
 
-    
     <header class="page-header">
       <h1>Admin Dashboard</h1>
       <p>Welcome back! Here's what's happening today.</p>
@@ -14,10 +13,10 @@
           <div class="icon-wrapper green-light">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
           </div>
-          <span class="badge positive">+12.5%</span>
         </div>
         <div class="stat-card-body">
-          <h2>1247</h2>
+          <!-- Menampilkan total user dari database -->
+          <h2>{{ stats.totalUsers }}</h2>
           <p>Total Users</p>
         </div>
       </div>
@@ -27,10 +26,10 @@
           <div class="icon-wrapper orange-light">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
           </div>
-          <span class="badge positive">+8.2%</span>
         </div>
         <div class="stat-card-body">
-          <h2>8</h2>
+          <!-- Menampilkan total resep dari database -->
+          <h2>{{ stats.totalRecipes }}</h2>
           <p>Total Recipes</p>
         </div>
       </div>
@@ -40,10 +39,9 @@
           <div class="icon-wrapper green-light">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
           </div>
-          <span class="badge positive">+5.1%</span>
         </div>
         <div class="stat-card-body">
-          <h2>892</h2>
+          <h2>{{ stats.activeUsers }}</h2>
           <p>Active Users</p>
         </div>
       </div>
@@ -53,10 +51,9 @@
           <div class="icon-wrapper blue-light">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
           </div>
-          <span class="badge positive">+24</span>
         </div>
         <div class="stat-card-body">
-          <h2>24</h2>
+          <h2>{{ stats.newThisMonth }}</h2>
           <p>New This Month</p>
         </div>
       </div>
@@ -69,13 +66,24 @@
           <h3>Recent Recipes</h3>
           <router-link to="/RecipeManagement" class="view-all">View All</router-link>
         </div>
-        <div class="recipe-list">
-          <div v-for="recipe in recentRecipes" :key="recipe.id" class="recipe-item">
-            <img :src="recipe.image" :alt="recipe.title" class="recipe-img" />
+        
+        <!-- Indikator Loading saat mengambil data -->
+        <div v-if="loading" class="loading-text">
+          <p>Memuat resep terbaru...</p>
+        </div>
+
+        <div v-else class="recipe-list">
+          <!-- Mapping resep dari backend -->
+          <div v-for="recipe in recentRecipes" :key="recipe.id_resep || recipe.id" class="recipe-item">
+            <img :src="recipe.img_url || recipe.image" :alt="recipe.judul || recipe.title" class="recipe-img" />
             <div class="recipe-info">
-              <h4>{{ recipe.title }}</h4>
-              <p>{{ recipe.description }}</p>
+              <h4>{{ recipe.nama_resep || recipe.nama_resep }}</h4>
+              <p>{{ (recipe.deskripsi || recipe.description || '').substring(0, 60) }}...</p>
             </div>
+          </div>
+          <!-- Tampilan jika tabel resep kosong -->
+          <div v-if="recentRecipes.length === 0" class="empty-state">
+            <p>Belum ada resep yang ditambahkan.</p>
           </div>
         </div>
       </div>
@@ -93,7 +101,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
               Manage Recipes
             </router-link>
-            <router-link to="/admin/users" class="btn-action secondary">
+            <router-link to="/userManagement" class="btn-action secondary">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
               Manage Users
             </router-link>
@@ -121,13 +129,84 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { recipes } from '../data/recipes.js' 
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
 import NavbarAdmin from '../components/NavbarAdmin.vue';
 
-// Mengambil 5 resep teratas untuk ditampilkan di dashboard
-const recentRecipes = computed(() => {
-  return recipes.slice(0, 5)
+const recentRecipes = ref([])
+const loading = ref(true)
+const stats = ref({
+  totalUsers: 0,
+  totalRecipes: 0,
+  activeUsers: 0,
+  newThisMonth: 0
+})
+
+const fetchDashboardData = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+    
+    const config = {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+
+    // --- AMBIL DATA PENGGUNA ---
+    const userRes = await axios.get('http://localhost:3000/api/pengguna', config)
+    const allUsers = userRes.data.data || []
+    
+    // 1. Total Users
+    stats.value.totalUsers = allUsers.length
+
+    // 2. Hitung User Baru Bulan Ini
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth()
+    const currentYear = currentDate.getFullYear()
+
+    const newUsers = allUsers.filter(user => {
+      if (!user.created_at) return false; 
+      const userDate = new Date(user.created_at)
+      return userDate.getMonth() === currentMonth && userDate.getFullYear() === currentYear
+    })
+    stats.value.newThisMonth = newUsers.length
+
+    // 3. Hitung Active Users (Parameter 3 Hari)
+    // Membuat batas waktu: Waktu sekarang dikurangi 3 hari
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+    const active = allUsers.filter(user => {
+      // Menggunakan updated_at sebagai indikator aktivitas login terakhir
+      // Jika updated_at null, kita fallback ke created_at
+      const lastActive = new Date(user.updated_at || user.created_at);
+      return lastActive >= threeDaysAgo;
+    });
+    
+    stats.value.activeUsers = active.length
+
+    // --- AMBIL DATA RESEP ---
+    const recipeRes = await axios.get('http://localhost:3000/api/resep', config)
+    const allRecipes = recipeRes.data.data || []
+    
+    stats.value.totalRecipes = allRecipes.length
+    
+    // Mapping untuk memastikan nama properti sesuai dengan kolom di Supabase (img_url & judul/nama_resep)
+    recentRecipes.value = allRecipes.slice(0, 5).map(r => ({
+      id: r.id_resep || r.id,
+      title: r.nama_resep || r.judul || 'Untitled',
+      image: r.img_url || 'https://via.placeholder.com/150',
+      description: r.deskripsi || ''
+    }))
+
+  } catch (error) {
+    console.error("Gagal memuat data dashboard:", error)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchDashboardData()
 })
 </script>
 
@@ -247,6 +326,13 @@ const recentRecipes = computed(() => {
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;
+}
+
+.loading-text, .empty-state {
+  text-align: center;
+  color: #6B7280;
+  padding: 2rem 0;
+  font-size: 0.95rem;
 }
 
 .recipe-list {

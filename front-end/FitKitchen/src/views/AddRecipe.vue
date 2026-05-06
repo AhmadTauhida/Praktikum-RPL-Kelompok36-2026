@@ -28,24 +28,7 @@
               <textarea v-model="form.deskripsi" rows="3" placeholder="Brief description of the recipe" required></textarea>
             </div>
 
-            <!-- Tambahan Form Kategori Diet -->
-            <div class="input-group">
-              <label>Diet Categories * <span class="help-text-inline">(Select at least one)</span></label>
-              <div class="checkbox-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Balanced" v-model="form.kategori_diet"> Balanced
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Keto" v-model="form.kategori_diet"> Keto
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Paleo" v-model="form.kategori_diet"> Paleo
-                </label>
-                <label class="checkbox-label">
-                  <input type="checkbox" value="Vegetarian" v-model="form.kategori_diet"> Vegetarian
-                </label>
-              </div>
-            </div>
+
 
             <div class="input-group">
               <label>Recipe Image</label>
@@ -112,6 +95,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 import backButton from '../assets/icons/backButton.svg'
 
@@ -119,13 +103,13 @@ const router = useRouter()
 const loading = ref(false)
 const selectedFile = ref(null)
 
+// 1. Pastikan semua properti form dideklarasikan dengan nilai awal yang benar
 const form = reactive({
   nama_resep: '', 
   deskripsi: '', 
   kalori: null, 
   protein: null, 
   prep_time: null,
-  kategori_diet: [], 
   bahan: [''], 
   langkah: ['']
 })
@@ -137,6 +121,7 @@ const handleFileChange = (event) => {
   }
 }
 
+// Logika Dynamic Inputs
 const addIngredient = () => form.bahan.push('')
 const removeIngredient = (idx) => {
   if (form.bahan.length > 1) form.bahan.splice(idx, 1)
@@ -144,6 +129,68 @@ const removeIngredient = (idx) => {
 const addStep = () => form.langkah.push('')
 const removeStep = (idx) => {
   if (form.langkah.length > 1) form.langkah.splice(idx, 1)
+}
+
+// FUNGSI UTAMA UNTUK MENGIRIM DATA KE BACKEND
+const handleSubmit = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+
+    // 2. Membersihkan elemen kosong pada array (bahan & langkah)
+    const bahanBersih = (form.bahan || []).filter(item => item && item.trim() !== '')
+    const langkahBersih = (form.langkah || []).filter(item => item && item.trim() !== '')
+
+    // Validasi dasar sebelum kirim
+    if (bahanBersih.length === 0 || langkahBersih.length === 0) {
+      alert("Harap isi setidaknya satu bahan dan satu langkah memasak.")
+      loading.value = false
+      return
+    }
+
+    if (!selectedFile.value) {
+      alert("Harap pilih gambar resep terlebih dahulu.")
+      loading.value = false
+      return
+    }
+
+    // 3. Siapkan FormData (Mengonversi JSON Array ke String)
+    const formData = new FormData()
+    formData.append('nama_resep', form.nama_resep || '')
+    formData.append('deskripsi', form.deskripsi || '')
+    formData.append('kalori', form.kalori || 0)
+    formData.append('protein', form.protein || 0)
+    formData.append('prep_time', form.prep_time || 0)
+
+
+    formData.append('bahan', JSON.stringify(bahanBersih))
+    formData.append('langkah', JSON.stringify(langkahBersih))
+
+    // 4. Masukkan file gambar (Field ini akan ditangkap req.file di backend)
+    formData.append('image', selectedFile.value) 
+
+    // 5. Konfigurasi Header
+    const config = {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    }
+
+    // 6. Eksekusi Request POST ke backend
+    await axios.post('http://localhost:3000/api/resep', formData, config)
+
+    alert("Resep berhasil ditambahkan!")
+    router.push('/RecipeManagement')
+
+  } catch (error) {
+    console.error("Error menambahkan resep:", error)
+    // Menangkap pesan error dari backend jika ada
+    const errorMsg = error.response?.data?.error || "Terjadi kesalahan server."
+    alert("Gagal menambahkan resep: " + errorMsg)
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

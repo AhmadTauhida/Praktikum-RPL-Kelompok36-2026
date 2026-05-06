@@ -10,5 +10,6 @@ router.post("/login", PenggunaController.login);
 // Protected Routes untuk Profile
 router.get("/profile", verifyToken, PenggunaController.getProfile);
 router.put("/profile", verifyToken, PenggunaController.updateProfile);
+router.get("/", verifyToken, PenggunaController.getAll); // Hanya admin yang bisa akses ini, nanti kita cek di controller
 
 export default router;

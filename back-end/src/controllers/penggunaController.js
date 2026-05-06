@@ -1,6 +1,7 @@
 import { PenggunaModel } from "../models/penggunaModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { supabase } from "../config/supabaseClient.js"; // Pastikan ini sudah diimpor untuk logika meal planner
 
 const JWT_SECRET = process.env.JWT_SECRET || "kunci_rahasia_sistem_absolut_123";
 
@@ -14,80 +15,63 @@ export const PenggunaController = {
     }
   },
 
-  async register(req, res) {
+ async register(req, res) {
     try {
-      // 1. Ekstraksi SELURUH data bungkusan payload klien
-      // Pastikan nama variabel ini persis dengan yang dikirim dari axios di frontend
       const { 
-        username, 
-        email, 
-        password, 
-        berat_badan, 
-        tinggi_badan, 
-        tanggal_lahir, 
-        gender // Pastikan kolom di Supabase bernama 'gender' (huruf kecil semua lebih aman)
+        username, email, password, berat_badan, 
+        tinggi_badan, tanggal_lahir, gender 
       } = req.body;
 
-      // Pengujian integritas properti wajib dasar
       if (!username || !email || !password) {
         return res.status(400).json({ 
           success: false, 
-          error: "Format muatan melanggar spesifikasi: Username, email, dan sandi absolut." 
+          error: "Username, email, dan password wajib diisi." 
         });
       }
 
-      // Validasi anomali duplikasi
       const penggunaEksisting = await PenggunaModel.getByEmail(email);
       if (penggunaEksisting) {
-        return res.status(409).json({ success: false, error: "Identitas email sudah terdaftar di dalam sistem." });
+        return res.status(409).json({ success: false, error: "Email sudah terdaftar." });
       }
 
-      // Enkripsi kata sandi
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-      // 2. Injeksi formasi struktur data LENGKAP untuk Supabase
       const payloadBaru = { 
-        username, 
-        email, 
-        password: hashedPassword,
-        berat_badan,
-        tinggi_badan,
-        tanggal_lahir,
-        gender,
-        role: 'user' // Default role
+        username, email, password: hashedPassword,
+        berat_badan, tinggi_badan, tanggal_lahir, gender,
+        role: req.body.role || 'user'
       };
       
       const penggunaBaru = await PenggunaModel.create(payloadBaru);
-      
-      // Eliminasi properti sandi dari respons
+      const id_pengguna_baru = penggunaBaru.id_pengguna;
+
+      // --- LOGIKA MEAL PLANNER (Pindahkan ke DALAM blok TRY) ---
+      const hariSeminggu = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const plannerPayload = hariSeminggu.map(hari => ({
+        id_pengguna: id_pengguna_baru,
+        hari: hari,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+
+      // Pastikan import { supabase } from "../config/supabaseClient.js" sudah ada di atas
+      const { error: plannerError } = await supabase
+        .from('meal_planner')
+        .insert(plannerPayload);
+
+      if (plannerError) {
+        console.error("Gagal generate meal planner:", plannerError);
+        // Tetap lanjut karena user sudah berhasil dibuat
+      }
+
       delete penggunaBaru.password;
+      // Respon dikirim PALING TERAKHIR
+      return res.status(201).json({ success: true, data: penggunaBaru });
 
-      res.status(201).json({ success: true, data: penggunaBaru });
     } catch (err) {
-      res.status(400).json({ success: false, error: err.message });
+      return res.status(400).json({ success: false, error: err.message });
     }
-
-    // Contoh sisipan logika di fungsi Register
-const hariSeminggu = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-// Siapkan data bungkusan (payload) untuk 7 hari sekaligus
-const plannerPayload = hariSeminggu.map(hari => ({
-  id_pengguna: id_pengguna_baru, // ID user yang baru saja selesai register
-  hari: hari,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
-}));
-
-// Lakukan bulk insert ke Supabase
-const { error: plannerError } = await supabase
-  .from('meal_planner')
-  .insert(plannerPayload);
-
-if (plannerError) {
-  console.error("Gagal men-generate hari untuk user baru:", plannerError);
-  // Tangani error jika diperlukan
-}
   },
 
   
@@ -109,6 +93,9 @@ if (plannerError) {
       if (!sandiValid) {
         return res.status(401).json({ success: false, error: "Kredensial tertolak: Kata sandi tidak valid." });
       }
+      await PenggunaModel.update(pengguna.id_pengguna, { 
+      updated_at: new Date().toISOString() 
+    })
 
       // 3. PENYEMPURNAAN: Sertakan 'role' dalam token JWT
       const token = jwt.sign(

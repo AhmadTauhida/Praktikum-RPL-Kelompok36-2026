@@ -26,7 +26,7 @@
             class="search-input"
           />
         </div>
-        <div class="filter-placeholder"></div>
+       
       </div>
 
       <div class="results-info">
@@ -37,7 +37,6 @@
         <div class="table-header">
           <div class="col-img">Image</div>
           <div class="col-name">Name</div>
-          <div class="col-category">Category</div>
           <div class="col-calories">Calories</div>
           <div class="col-protein">Protein</div>
           <div class="col-actions">Actions</div>
@@ -47,10 +46,13 @@
           <div v-if="loading" class="table-row" style="justify-content: center; padding: 2rem;">
             Loading recipes...
           </div>
+          <div v-else-if="filteredRecipes.length === 0" class="table-row" style="justify-content: right; padding: 2rem;">
+            Tidak ada resep yang ditemukan.
+          </div>
           <div v-else v-for="recipe in filteredRecipes" :key="recipe.id_resep" class="table-row">
             <div class="col-img">
               <img 
-                  :src="recipe.img_url" 
+                  :src="recipe.img_url || 'https://via.placeholder.com/50?text=No+Image'" 
                   :alt="recipe.nama_resep" 
                   class="recipe-thumbnail" 
                   @error="handleImageError"
@@ -60,16 +62,14 @@
               <h4 class="recipe-title">{{ recipe.nama_resep }}</h4>
               <p class="recipe-desc">{{ recipe.deskripsi }}</p>
             </div>
-            <div class="col-category">
-              <span class="badge">{{ recipe.category }}</span>
-            </div>
+
             <div class="col-calories stat-group">
               <img :src="calories" alt="Calories" class="stat-icon" /> 
-              <span>{{ recipe.kalori }}</span>
+              <span>{{ recipe.kalori || 0 }} kcal</span>
             </div>
             <div class="col-protein stat-group">
               <img :src="protein" alt="Protein" class="stat-icon" /> 
-              <span>{{ recipe.protein }}g</span>
+              <span>{{ recipe.protein || 0 }}g</span>
             </div>
             <div class="col-actions">
               <button class="btn-action edit" @click="editRecipe(recipe.id_resep)" title="Edit">
@@ -90,11 +90,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue' 
 import { useRouter } from 'vue-router' 
+import axios from 'axios' // <-- TAMBAHKAN IMPORT AXIOS
 import NavbarAdmin from '../components/NavbarAdmin.vue'
 
 // Import icon statis
-import calories from '../assets/icons/Calori.png'
-import protein from '../assets/icons/protein.png'
+import calories from '../assets/icons/Calori.svg'
+import protein from '../assets/icons/protein.svg'
 
 const router = useRouter() 
 const recipes = ref([]) 
@@ -110,10 +111,30 @@ const filteredRecipes = computed(() => {
   if (!searchQuery.value) return recipes.value
   const lowerCaseQuery = searchQuery.value.toLowerCase()
   return recipes.value.filter(recipe => 
-    recipe.nama_resep.toLowerCase().includes(lowerCaseQuery) || 
+    (recipe.nama_resep && recipe.nama_resep.toLowerCase().includes(lowerCaseQuery)) || 
     (recipe.deskripsi && recipe.deskripsi.toLowerCase().includes(lowerCaseQuery))
   )
 })
+
+// MENGAMBIL DATA DARI BACKEND
+const fetchRecipes = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+    
+    const config = {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+
+    const response = await axios.get('http://localhost:3000/api/resep', config)
+    recipes.value = response.data.data || []
+  } catch (error) {
+    console.error("Gagal mengambil data resep:", error)
+    alert("Gagal memuat daftar resep dari server.")
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
   fetchRecipes()
@@ -125,10 +146,35 @@ const editRecipe = (id) => {
 }
 
 // 2. FITUR DELETE: Pop-up konfirmasi dan hapus dari Supabase
+const deleteRecipe = async (id) => {
+  // Konfirmasi sebelum menghapus
+  const isConfirmed = confirm("Apakah Anda yakin ingin menghapus resep ini? Tindakan ini tidak dapat dibatalkan.");
+  
+  if (!isConfirmed) return;
+
+  try {
+    const token = localStorage.getItem('token')
+    const config = {
+      headers: { Authorization: `Bearer ${token}` }
+    }
+
+    // Tembak endpoint delete di backend
+    await axios.delete(`http://localhost:3000/api/resep/${id}`, config)
+    
+    // Hapus data dari array lokal (Vue state) agar UI langsung terupdate tanpa perlu refresh halaman
+    recipes.value = recipes.value.filter(recipe => recipe.id_resep !== id)
+    
+    alert("Resep berhasil dihapus.")
+  } catch (error) {
+    console.error("Gagal menghapus resep:", error)
+    alert("Terjadi kesalahan saat menghapus resep.")
+  }
+}
 
 </script>
 
 <style scoped>
+/* SEMUA CSS TETAP SAMA SEPERTI SEBELUMNYA */
 .admin-layout {
   background-color: #fafafa;
   min-height: 100vh;
@@ -136,7 +182,6 @@ const editRecipe = (id) => {
   color: #333;
 }
 
-/* Class baru untuk konten yang membutuhkan padding */
 .admin-content {
   padding: 2rem 4rem;
 }
@@ -269,6 +314,13 @@ const editRecipe = (id) => {
 
 .table-row:hover {
   background-color: #fcfcfc;
+}
+
+.table-header, .table-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 120px 100px; 
+  align-items: center;
+  padding: 1rem 1.5rem;
 }
 
 /* Column specifics */

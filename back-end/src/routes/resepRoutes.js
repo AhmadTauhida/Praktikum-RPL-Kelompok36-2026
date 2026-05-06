@@ -1,16 +1,19 @@
 import express from "express";
+import multer from "multer"; // <-- Import multer
 import { ResepController } from "../controllers/resepController.js";
 import { verifyToken } from "../middleware/authMiddleware.js"; 
 
 const router = express.Router();
 
-// Rute PUBLIK: Siapapun (termasuk Guest di Landing page) bisa melihat daftar resep
+// Konfigurasi Multer untuk menyimpan file di memory (RAM) sementara
+const upload = multer({ storage: multer.memoryStorage() });
+
 router.get("/", ResepController.getAll);
 router.get("/:id", ResepController.getById);
 
-// Rute PRIVAT: Hanya user/admin yang login yang bisa mengubah data
-router.post("/", verifyToken, ResepController.create);
-router.put("/:id", verifyToken, ResepController.update);
+// Sisipkan upload.single('image') setelah verifikasi token
+router.post("/", verifyToken, upload.single('image'), ResepController.create);
+router.put("/:id", verifyToken, upload.single('image'), ResepController.update);
 router.delete("/:id", verifyToken, ResepController.remove);
 
 export default router;
