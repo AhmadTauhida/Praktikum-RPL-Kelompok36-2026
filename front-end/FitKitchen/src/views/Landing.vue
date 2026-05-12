@@ -82,7 +82,7 @@ import NavbarUser from '../components/NavbarUser.vue'
 import axios from 'axios'
 
 // Icons
-import searchIcon from '../assets/icons/search.png'
+import searchIcon from '../assets/icons/Search.png'
 import protein from '../assets/icons/protein.png'
 import calories from '../assets/icons/Calori.png'
 
