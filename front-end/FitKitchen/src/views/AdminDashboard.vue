@@ -152,7 +152,7 @@ const fetchDashboardData = async () => {
     }
 
     // --- AMBIL DATA PENGGUNA ---
-    const userRes = await axios.get('http://localhost:3000/api/pengguna/admin/users', config)
+    const userRes = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/admin/users', config)
     const fetchedUsers = userRes.data.data || []
     
     // PERBAIKAN: Filter data untuk hanya mengambil entitas yang memiliki role 'user'
@@ -189,7 +189,7 @@ const fetchDashboardData = async () => {
     stats.value.activeUsers = active.length
 
     // --- AMBIL DATA RESEP ---
-    const recipeRes = await axios.get('http://localhost:3000/api/resep', config)
+    const recipeRes = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep', config)
     const allRecipes = recipeRes.data.data || []
     
     stats.value.totalRecipes = allRecipes.length

@@ -178,7 +178,7 @@ const handleSubmit = async () => {
     }
 
     // 6. Eksekusi Request POST ke backend
-    await axios.post('http://localhost:3000/api/resep', formData, config)
+    await axios.post('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep', formData, config)
 
     alert("Resep berhasil ditambahkan!")
     router.push('/RecipeManagement')

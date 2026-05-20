@@ -208,7 +208,7 @@ const activityLevels = [
 const fetchUserData = async () => {
   isLoading.value = true;
   try {
-    const response = await axios.get('http://localhost:3000/api/pengguna/profile');
+    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/profile');
     if (response.data.success) {
       const user = response.data.data;
       form.value.sex = user.gender || '';
