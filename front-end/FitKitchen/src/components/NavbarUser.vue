@@ -5,7 +5,19 @@
       <span class="logo-text">FitKitchen</span>
     </div>
 
-    <nav class="nav-links">
+    <button
+      class="nav-toggle"
+      type="button"
+      @click="toggleMenu"
+      :aria-expanded="isMenuOpen"
+      aria-label="Toggle navigation"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav-links" :class="{ open: isMenuOpen }">
       <router-link to="/" class="nav-item" active-class="active">
         <img :src="homeIcon" alt="Home" class="nav-custom-icon" /> Home
       </router-link>
@@ -63,6 +75,7 @@ const userProfile = ref({
 
 const isLoggedIn = ref(false)
 const isLoggingOut = ref(false)
+const isMenuOpen = ref(false)
 
 // ==================== PERUBAHAN UTAMA ====================
 // Pantau perubahan URL/Rute. Setiap kali pindah halaman (termasuk setelah sukses login), 
@@ -71,6 +84,7 @@ watch(
   () => route.path,
   () => {
     checkAuthStatus()
+    isMenuOpen.value = false
   }
 )
 
@@ -123,9 +137,14 @@ const handleLogout = () => {
   isLoggedIn.value = false
   userProfile.value = { username: '', role: '' }
   isLoggingOut.value = false
+  isMenuOpen.value = false
 
   // Redirect ke halaman Landing
   router.push({ name: 'Landing' })
+}
+
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value
 }
 </script>
 
@@ -177,6 +196,14 @@ const handleLogout = () => {
 /* Navigation Links - Mobile: Hidden by default */
 .nav-links {
   display: none;
+}
+
+.nav-links.open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.75rem;
 }
 
 /* User Actions */

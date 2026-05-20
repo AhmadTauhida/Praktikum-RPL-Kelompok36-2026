@@ -79,7 +79,54 @@ input, button, textarea, select {
 .nav-links {
   display: none;
 }
+.nav-links.open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
 
+.nav-right-section.open {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.nav-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 2rem;
+  height: 1.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.nav-toggle span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background-color: #1A1A1A;
+  border-radius: 999px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-toggle[aria-expanded="true"] span:first-child {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle[aria-expanded="true"] span:last-child {
+  transform: translateY(-6px) rotate(-45deg);
+}
 .nav-item {
   display: flex;
   align-items: center;
@@ -227,10 +274,18 @@ input, button, textarea, select {
     margin-left: auto;
   }
 
+  .nav-toggle {
+    display: none;
+  }
+
   /* Show nav links on tablet */
   .nav-links {
     display: flex;
     gap: 0.5rem;
+  }
+
+  .nav-links.open {
+    display: flex;
   }
 
   .nav-item {

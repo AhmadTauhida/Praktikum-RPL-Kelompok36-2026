@@ -5,8 +5,20 @@
       <span class="logo-text">FitKitchen</span>
     </div>
 
-    <div class="nav-right-section">
-      <nav class="nav-links">
+    <button
+      class="nav-toggle"
+      type="button"
+      @click="toggleMenu"
+      :aria-expanded="isMenuOpen"
+      aria-label="Toggle navigation"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="nav-right-section" :class="{ open: isMenuOpen }">
+      <nav class="nav-links" :class="{ open: isMenuOpen }">
         <router-link to="/admin" class="nav-item" active-class="active" exact-active-class="active">
           <img :src="dashboardIcon" alt="Home" class="nav-custom-icon" />
           Dashboard
@@ -65,12 +77,14 @@ const adminProfile = ref({
 
 const isLoggedIn = ref(false)
 const isLoggingOut = ref(false)
+const isMenuOpen = ref(false)
 
 // Pantau perubahan URL/Rute untuk update data navbar otomatis
 watch(
   () => route.path,
   () => {
     checkAuthStatus()
+    isMenuOpen.value = false
   }
 )
 
@@ -123,9 +137,14 @@ const handleLogout = () => {
   isLoggedIn.value = false
   adminProfile.value = { username: '', role: '' }
   isLoggingOut.value = false
+  isMenuOpen.value = false
 
   // Redirect ke halaman Landing
   router.push({ name: 'Landing' })
+}
+
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value
 }
 </script>
 
