@@ -126,7 +126,7 @@ const fetchRecipes = async () => {
       headers: { Authorization: `Bearer ${token}` }
     }
 
-    const response = await axios.get('http://localhost:3000/api/resep', config)
+    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep', config)
     recipes.value = response.data.data || []
   } catch (error) {
     console.error("Gagal mengambil data resep:", error)
@@ -159,7 +159,7 @@ const deleteRecipe = async (id) => {
     }
 
     // Tembak endpoint delete di backend
-    await axios.delete(`http://localhost:3000/api/resep/${id}`, config)
+    await axios.delete(`https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep/${id}`, config)
     
     // Hapus data dari array lokal (Vue state) agar UI langsung terupdate tanpa perlu refresh halaman
     recipes.value = recipes.value.filter(recipe => recipe.id_resep !== id)
