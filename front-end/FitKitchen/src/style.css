@@ -1,8 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Terapkan ke seluruh elemen */
+/* ===== MOBILE FIRST - ROOT & RESET ===== */
+
 :root {
   font-family: 'Inter', sans-serif;
+  font-size: 16px; /* Base font size untuk rem calculations */
+  --primary-color: #22C55E;
+  --primary-light: #F0FDF4;
+  --text-dark: #1a1a1a;
+  --text-muted: #888;
+  --border-color: #EAEAEA;
+  --bg-light: #fafafa;
 }
 
 /* Reset dasar agar tidak ada margin aneh */
@@ -16,131 +24,130 @@ body {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #fafafa; /* Tambahan opsional agar navbar putih lebih menonjol */
+  background-color: var(--bg-light);
 }
 
 input, button, textarea, select {
   font-family: inherit;
 }
 
-
-
-/* =========================================
-   NAVBAR GLOBAL STYLE 
-   (Berlaku untuk Admin & User)
-========================================= */
+/* ===== NAVBAR GLOBAL STYLE (MOBILE) ===== */
 
 .navbar {
   display: flex;
-  justify-content: space-between; /* Memisahkan Logo (Kiri) dan Menu (Kanan) */
+  justify-content: space-between;
   align-items: center;
-  padding: 12px 40px; /* Padding vertikal sedikit dirapatkan, horizontal tetap luas */
+  padding: 0.75rem 1rem;
   background-color: #FFFFFF;
-  border-bottom: 1px solid #EAEAEA;
-  
+  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
-  z-index: 1000; 
+  z-index: 1000;
   width: 100%;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
 
-/* --- Bagian Kiri (Logo) --- */
+/* --- Logo Section --- */
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 20px;
+  gap: 0.625rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--text-dark);
+  flex-shrink: 0;
 }
 
 .logo-icon {
-  width: 24px;
-  height: 24px;
-  /* Filter untuk mengubah ikon SVG hitam menjadi hijau #22C55E secara global */
+  width: 1.5rem;
+  height: 1.5rem;
   filter: invert(58%) sepia(54%) saturate(3015%) hue-rotate(108deg) brightness(98%) contrast(88%);
 }
 
-/* --- Wrapper Kanan (Menu Navigasi & Profil) --- */
-.nav-right-section {
-  display: flex;
-  align-items: center;
-  gap: 24px; /* Jarak antara blok navigasi dan blok profil */
-}
-
-/* --- Link Navigasi --- */
-.nav-links {
-  display: flex;
-  gap: 8px; /* Jarak antar tombol menu yang berdekatan */
-}
-
 .mainIcon {
-  width: 28px;
-  height: 28px;
-  
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+/* --- Right Section (Mobile: Hidden by default) --- */
+.nav-right-section {
+  display: none;
+}
+
+/* --- Navigation Links --- */
+.nav-links {
+  display: none;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   text-decoration: none;
   color: #333;
-  padding: 8px 18px; /* Padding horizontal dilebarkan */
-  border-radius: 20px; /* Diubah menjadi 20px agar bentuknya melengkung seperti kapsul */
+  padding: 0.5rem 1.125rem;
+  border-radius: 1.25rem;
   font-weight: 500;
-  font-size: 15px;
+  font-size: 0.938rem;
   transition: all 0.2s ease;
 }
 
-.nav-custom-icon {
-  width: 18px;
-  height: 18px;
-  transition: filter 0.2s ease;
-  filter: brightness(0); /* Default ikon menjadi hitam pekat */
-}
-
 .nav-item:hover:not(.active) {
-  background-color: #F0FDF4;
-  color: #16A34A;
+  background-color: var(--primary-light);
+  color: var(--primary-color);
 }
 
-/* Fitur Perubahan Warna Saat Aktif */
 .nav-item.active {
-  background-color: #22C55E;
+  background-color: var(--primary-color);
   color: #ffffff;
 }
 
-.nav-item.active .nav-custom-icon {
-  filter: brightness(0) invert(1); /* Mengubah ikon menjadi putih */
+.nav-custom-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  transition: filter 0.2s ease;
+  filter: brightness(0);
 }
 
-/* --- Aksi Pengguna (Profil & Logout) --- */
+.nav-item.active .nav-custom-icon {
+  filter: brightness(0) invert(1);
+}
+
+/* --- User Actions (Mobile: Minimal) --- */
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
+  margin-left: auto;
 }
 
-/* Garis pemisah dipindah ke sini (sebagai border-left) */
 .user-info {
   display: flex;
   flex-direction: column;
-  text-align: left; /* Mengubah teks menjadi rata kiri */
-  border-left: 1px solid #eaeaea; /* Menjadi garis pemisah antara Menu dan Profil */
-  padding-left: 24px; /* Memberi jarak antara garis pemisah dengan nama profil */
+  text-align: left;
+  border-left: 1px solid var(--border-color);
+  padding-left: 1rem;
   line-height: 1.3;
 }
 
 .user-name {
   font-weight: 600;
-  font-size: 14px;
-  color: #1A1A1A;
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 7.5rem;
 }
 
 .user-role {
-  font-size: 12px;
-  color: #888;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 7.5rem;
 }
 
 .btn-logout {
@@ -148,19 +155,177 @@ input, button, textarea, select {
   border: none;
   cursor: pointer;
   font-weight: 500;
-  font-size: 15px;
+  font-size: 0.875rem;
   color: #333;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   transition: color 0.2s ease;
+  border-radius: 0.5rem;
+  flex-shrink: 0;
 }
 
 .btn-logout:hover {
   color: #e74c3c;
+  background-color: #FEE2E2;
 }
 
 .btn-logout:hover .nav-custom-icon {
   filter: invert(32%) sepia(85%) saturate(2462%) hue-rotate(345deg) brightness(90%) contrast(96%);
+}
+
+.btn-login {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #0284C7;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  background-color: #DBEAFE;
+  flex-shrink: 0;
+}
+
+.btn-login:hover {
+  background-color: #BFDBFE;
+}
+
+/* ===== TABLET (768px+) ===== */
+@media (min-width: 48rem) {
+  .navbar {
+    padding: 0.75rem 1.5rem;
+    flex-wrap: nowrap;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .logo-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .mainIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  /* Show right section on tablet */
+  .nav-right-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-left: auto;
+  }
+
+  /* Show nav links on tablet */
+  .nav-links {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-item {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .nav-custom-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .user-info {
+    padding-left: 1.5rem;
+  }
+
+  .user-name {
+    font-size: 0.8125rem;
+    max-width: 9rem;
+  }
+
+  .user-role {
+    font-size: 0.75rem;
+    max-width: 9rem;
+  }
+
+  .btn-logout,
+  .btn-login {
+    font-size: 0.8125rem;
+    padding: 0.625rem 1rem;
+  }
+}
+
+/* ===== DESKTOP (1024px+) ===== */
+@media (min-width: 64rem) {
+  .navbar {
+    padding: 0.75rem 2.5rem;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .logo-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .mainIcon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .nav-right-section {
+    gap: 2rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-item {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.938rem;
+  }
+
+  .nav-custom-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .user-actions {
+    gap: 1rem;
+  }
+
+  .user-info {
+    padding-left: 2rem;
+  }
+
+  .user-name {
+    font-size: 0.875rem;
+    max-width: 12rem;
+  }
+
+  .user-role {
+    font-size: 0.8125rem;
+    max-width: 12rem;
+  }
+
+  .btn-logout,
+  .btn-login {
+    font-size: 0.938rem;
+    padding: 0.75rem 1.25rem;
+  }
 }

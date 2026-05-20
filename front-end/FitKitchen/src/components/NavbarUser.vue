@@ -128,3 +128,240 @@ const handleLogout = () => {
   router.push({ name: 'Landing' })
 }
 </script>
+
+<style scoped>
+/* ===== MOBILE FIRST - BASE STYLES ===== */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 1000;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Body padding untuk fixed navbar */
+:global(body) {
+  padding-top: 5.5rem;
+}
+
+/* Logo Section */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.mainIcon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1A1A1A;
+  white-space: nowrap;
+}
+
+/* Navigation Links - Mobile: Hidden by default */
+.nav-links {
+  display: none;
+}
+
+/* User Actions */
+.user-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+}
+
+.user-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1F2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 8rem;
+}
+
+.user-role {
+  font-size: 0.625rem;
+  color: #6B7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 8rem;
+}
+
+/* Buttons */
+.btn-logout,
+.btn-login {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-logout {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background-color: #FECACA;
+}
+
+.btn-logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-login {
+  background-color: #DBEAFE;
+  color: #0284C7;
+}
+
+.btn-login:hover {
+  background-color: #BFDBFE;
+}
+
+.nav-custom-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* ===== TABLET (768px+) ===== */
+@media (min-width: 48rem) {
+  .navbar {
+    padding: 1rem 1.5rem;
+    flex-wrap: nowrap;
+  }
+
+  /* Show nav links */
+  .nav-links {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #4B5563;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .nav-item:hover {
+    background-color: #F3F4F6;
+    color: #1A1A1A;
+  }
+
+  .nav-item.active {
+    background-color: #E8F5E9;
+    color: #2D6A4F;
+    font-weight: 600;
+  }
+
+  .user-actions {
+    gap: 1rem;
+  }
+
+  .user-name {
+    font-size: 0.8125rem;
+    max-width: 10rem;
+  }
+
+  .user-role {
+    font-size: 0.6875rem;
+    max-width: 10rem;
+  }
+
+  .btn-logout,
+  .btn-login {
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+  }
+}
+
+/* ===== DESKTOP (1024px+) ===== */
+@media (min-width: 64rem) {
+  .navbar {
+    padding: 1.25rem 2rem;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .nav-item {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.938rem;
+  }
+
+  .user-actions {
+    gap: 1.5rem;
+  }
+
+  .user-name {
+    font-size: 0.875rem;
+    max-width: 12rem;
+  }
+
+  .user-role {
+    font-size: 0.75rem;
+    max-width: 12rem;
+  }
+
+  .btn-logout,
+  .btn-login {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+  }
+
+  .mainIcon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+</style>
