@@ -25,7 +25,7 @@ axios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');
-      router.push({ name: 'Landing' });
+      router.push({ name: 'Login' });
       alert('Sesi Anda telah berakhir, silakan login kembali.');
     }
     return Promise.reject(error);

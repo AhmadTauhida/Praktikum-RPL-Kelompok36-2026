@@ -127,7 +127,7 @@ const handleLogin = async () => {
     }
   } catch (err) {
     // Menangkap pesan error dari backend (misal: "Email tidak ditemukan")
-    loginError.value = err.response?.data?.error || 'Terjadi kesalahan koneksi ke server.'
+    loginError.value = 'Email atau password salah.'
   } finally {
     loading.value = false
   }
