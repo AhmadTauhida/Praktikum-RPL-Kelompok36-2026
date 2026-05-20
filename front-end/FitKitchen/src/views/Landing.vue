@@ -104,7 +104,7 @@ const fetchRecipes = async () => {
     loading.value = true;
     console.log("Memulai fetching resep..."); // Diagnosa 1
     
-    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep');
+    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/resep');
     
     console.log("Data mentah dari backend:", response.data); // Diagnosa 2
 

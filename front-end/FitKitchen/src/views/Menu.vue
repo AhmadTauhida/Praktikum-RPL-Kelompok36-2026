@@ -106,7 +106,7 @@ const fetchRecipeDetails = async () => {
     const recipeId = route.params.id 
     
     // Panggil API getById yang sudah kita buka aksesnya di rute publik
-    const response = await axios.get(`https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep/${recipeId}`)
+    const response = await axios.get(`https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/resep/${recipeId}`)
     
     if (response.data && response.data.success) {
       const item = response.data.data

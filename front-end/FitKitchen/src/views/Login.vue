@@ -105,7 +105,7 @@ const handleLogin = async () => {
   
   try {
     // Memanggil API Backend
-    const response = await axios.post('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/login', {
+    const response = await axios.post('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/pengguna/login', {
       email: email.value,
       password: password.value
     })

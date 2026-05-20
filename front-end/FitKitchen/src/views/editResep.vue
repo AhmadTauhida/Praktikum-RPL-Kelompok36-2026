@@ -132,7 +132,7 @@ const form = reactive({
   langkah: ['']
 })
 
-const API_URL = 'https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep'
+const API_URL = 'https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/resep'
 
 onMounted(() => {
   if (recipeId) {

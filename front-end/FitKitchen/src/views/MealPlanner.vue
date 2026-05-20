@@ -174,7 +174,7 @@ const fetchRecipes = async () => {
     const token = localStorage.getItem('token'); // Ambil token dulu
 
     // Sisipkan token di headers (seperti fetchMyPlanner)
-    const res = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/resep', {
+    const res = await axios.get('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/resep', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -197,7 +197,7 @@ const fetchRecipes = async () => {
 const fetchMyPlanner = async (token) => {
   try {
     // Memanggil API backend yang sudah menggunakan .eq("id_pengguna", ...)
-    const res = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/meal-planner', {
+    const res = await axios.get('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/meal-planner', {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -268,7 +268,7 @@ const selectRecipe = async (recipe) => {
   }
 
   try {
-    const res = await axios.post('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/meal-planner/recipe', {
+    const res = await axios.post('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/meal-planner/recipe', {
       id_planner: id_planner,
       id_resep: recipe.id_resep,
       waktu: time
@@ -299,7 +299,7 @@ const removeRecipe = async (day, time) => {
   const id_detail = detailIds[day][time];
 
   try {
-    const res = await axios.delete(`https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/meal-planner/recipe/${id_detail}`, {
+    const res = await axios.delete(`https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/meal-planner/recipe/${id_detail}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 

@@ -117,7 +117,7 @@ const loading = ref(true)
 const error = ref(null)
 
 // API URL (Sesuaikan dengan endpoint yang sudah kita buat sebelumnya)
-const API_URL = 'https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/admin/users'
+const API_URL = 'https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/pengguna/admin/users'
 
 // Fetch Data
 const fetchUsers = async () => {

@@ -140,7 +140,7 @@ const isEditing = ref(false)
 // 1. Fungsi Ambil Data dari Backend
 const fetchProfile = async () => {
   try {
-    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/profile')
+    const response = await axios.get('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/pengguna/profile')
     if (response.data.success) {
       profile.value = response.data.data
     }
@@ -160,7 +160,7 @@ const formattedBirthDate = computed(() => {
 const toggleEdit = async () => {
   if (isEditing.value) {
     try {
-      await axios.put('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/profile', profile.value)
+      await axios.put('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/pengguna/profile', profile.value)
       isEditing.value = false
       alert('Profil berhasil diperbarui!')
     } catch (error) {

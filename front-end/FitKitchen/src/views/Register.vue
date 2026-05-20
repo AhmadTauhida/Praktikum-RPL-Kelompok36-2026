@@ -235,7 +235,7 @@ const handleRegister = async () => {
   
   try {
     // 1. Panggil API Registrasi
-    const response = await axios.post('https://praktikum-rpl-kelompok36-2026-backe.vercel.app/api/pengguna/register', {
+    const response = await axios.post('https://praktikum-rpl-kelompok36-2026-ul8w.vercel.app/api/pengguna/register', {
       username: form.value.username,
       email: form.value.email,
       password: form.value.password,
